@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package hytale.agent.v1;
+
+option go_package = "github.com/HyGames-fun/hytale-monitoring-backend/pkg/agentproto;agentproto";
+
+// HytaleMonitoringAgent is the gRPC telemetry service running on the monitoring cluster.
+// Hytale server owners or mod authors install the agent mod on their Hytale server,
+// which connects to this service to verify ownership and stream live server telemetry.
+service HytaleMonitoringAgent {
+  // RegisterAgent authenticates the mod agent with the server's secret token.
+  rpc RegisterAgent (RegisterAgentRequest) returns (RegisterAgentResponse);
+
+  // ReportMetrics submits real-time performance and player telemetry.
+  rpc ReportMetrics (MetricsReportRequest) returns (MetricsReportResponse);
+
+  // Ping acts as a lightweight heartbeat to measure round-trip latency.
+  rpc Ping (PingRequest) returns (PingResponse);
+}
+
+message RegisterAgentRequest {
+  int32 server_id = 1;
+  string agent_token = 2;
+  string server_version = 3;
+  string mod_version = 4;
+}
+
+message RegisterAgentResponse {
+  bool success = 1;
+  string message = 2;
+  string session_id = 3;
+  int32 report_interval_seconds = 4;
+}
+
+message MetricsReportRequest {
+  string session_id = 1;
+  int32 server_id = 2;
+  int32 online_players = 3;
+  int32 max_players = 4;
+  double tps = 5;
+  int64 ram_used_bytes = 6;
+  int64 ram_max_bytes = 7;
+  int64 uptime_seconds = 8;
+  repeated string player_names = 9;
+  int64 timestamp = 10;
+}
+
+message MetricsReportResponse {
+  bool acknowledged = 1;
+  int64 server_time = 2;
+}
+
+message PingRequest {
+  string session_id = 1;
+  int64 client_timestamp = 2;
+}
+
+message PingResponse {
+  int64 server_timestamp = 1;
+  bool is_active = 2;
+}

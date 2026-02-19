@@ -1,0 +1,834 @@
+basePath: /
+definitions:
+  domain.CreateServerDTO:
+    properties:
+      description:
+        type: string
+      domain:
+        type: string
+      ip:
+        type: string
+      name:
+        type: string
+      nameId:
+        type: string
+      poster:
+        type: string
+      region:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  domain.FiltersDTO:
+    properties:
+      region:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  domain.FindPageDTO:
+    properties:
+      filters:
+        $ref: '#/definitions/domain.FiltersDTO'
+      order:
+        $ref: '#/definitions/domain.OrderDTO'
+      page:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  domain.LoginDTO:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  domain.OrderDTO:
+    properties:
+      createdAt:
+        type: string
+      likes:
+        type: string
+    type: object
+  domain.RegisterDTO:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  domain.UpdateServerDTO:
+    properties:
+      description:
+        type: string
+      domain:
+        type: string
+      ip:
+        type: string
+      name:
+        type: string
+      nameId:
+        type: string
+      poster:
+        type: string
+      region:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  handler.SetAvatarDTO:
+    properties:
+      avatarUrl:
+        type: string
+    type: object
+  response.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.SuccessResponse:
+    properties:
+      data: {}
+      status:
+        type: string
+    type: object
+  response.ValidationErrorResponse:
+    properties:
+      errors:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        type: object
+      status:
+        type: string
+    type: object
+host: localhost:4242
+info:
+  contact: {}
+  description: Hytale Server Monitoring, Catalog and Telemetry Service.
+  title: Hytale Monitoring API
+  version: "1.0"
+paths:
+  /:
+    get:
+      description: Check service health status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+      summary: Health check
+      tags:
+      - health
+  /auth/discord/callback:
+    get:
+      description: Handle Discord OAuth2 code and sign user in
+      parameters:
+      - description: Discord authorization code
+        in: query
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Discord OAuth callback
+      tags:
+      - auth
+  /auth/discord/login:
+    get:
+      description: Redirect to Discord OAuth2 authorization URL
+      responses:
+        "302":
+          description: Redirect to Discord
+          schema:
+            type: string
+      summary: Discord OAuth redirect
+      tags:
+      - auth
+  /auth/google/callback:
+    get:
+      description: Handle Google OAuth2 code and sign user in
+      parameters:
+      - description: Google authorization code
+        in: query
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Google OAuth callback
+      tags:
+      - auth
+  /auth/google/login:
+    get:
+      description: Redirect to Google OAuth2 authorization URL
+      responses:
+        "302":
+          description: Redirect to Google
+          schema:
+            type: string
+      summary: Google OAuth redirect
+      tags:
+      - auth
+  /auth/init-register:
+    post:
+      consumes:
+      - application/json
+      description: Send email confirmation code and start registration session
+      parameters:
+      - description: User registration details
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RegisterDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ValidationErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Initialize user registration
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ValidationErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: User login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Clear authentication cookies and session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+      summary: User logout
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      description: Exchange refresh token cookie for new access token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      description: Verify email code and create user account
+      parameters:
+      - description: Email verification code
+        in: query
+        name: code
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Complete user registration
+      tags:
+      - auth
+  /auth/resend-email:
+    post:
+      description: Resend 6-digit confirmation code for active registration session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Resend verification email
+      tags:
+      - auth
+  /auth/stop-register-session:
+    post:
+      description: Clear registration session cookies and temporary data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+      summary: Cancel registration session
+      tags:
+      - auth
+  /server:
+    post:
+      consumes:
+      - application/json
+      description: Retrieve paginated list of servers with filters and sorting
+      parameters:
+      - description: Pagination and filter criteria
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.FindPageDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ValidationErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Find servers page
+      tags:
+      - server
+  /server/{id}/verify/confirm:
+    post:
+      description: Verify TXT record for server domain ownership
+      parameters:
+      - description: Server ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Confirm DNS verification
+      tags:
+      - server
+  /server/{id}/verify/init:
+    post:
+      description: Generate DNS challenge token and instructions for server domain
+        verification
+      parameters:
+      - description: Server ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Initiate DNS verification
+      tags:
+      - server
+  /server/create:
+    post:
+      consumes:
+      - application/json
+      description: Register a new Hytale server in the monitoring catalog
+      parameters:
+      - description: Server creation payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateServerDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ValidationErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Create a new server
+      tags:
+      - server
+  /server/id/{id}:
+    delete:
+      description: Delete server by ID
+      parameters:
+      - description: Server ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Delete server
+      tags:
+      - server
+    patch:
+      consumes:
+      - application/json
+      description: Update server metadata by ID
+      parameters:
+      - description: Server ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update server payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateServerDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ValidationErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Update server details
+      tags:
+      - server
+  /server/id/{nameId}:
+    get:
+      description: Get detailed server information by kebab-case nameId
+      parameters:
+      - description: Server kebab-case nameId
+        in: path
+        name: nameId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Find server by nameId
+      tags:
+      - server
+  /server/leaderboard:
+    get:
+      description: Get top servers ranked by score (likes and active players)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get servers leaderboard
+      tags:
+      - server
+  /server/like:
+    post:
+      description: Vote for a server with Turnstile verification or user session
+      parameters:
+      - description: Server ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: Cloudflare Turnstile token for guests
+        in: query
+        name: token
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Like or unlike a server
+      tags:
+      - server
+  /server/quantity:
+    get:
+      description: Get the total count of registered servers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get total servers count
+      tags:
+      - server
+  /server/search:
+    get:
+      description: Full-text search servers by name, description or tags
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Search servers
+      tags:
+      - server
+  /server/status:
+    get:
+      description: Check online status of a server by ID
+      parameters:
+      - description: Server ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get online status of a server
+      tags:
+      - server
+  /server/statuses:
+    get:
+      description: Batch check online statuses by server IDs
+      parameters:
+      - description: Comma-separated server IDs
+        in: query
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get online statuses for multiple servers
+      tags:
+      - server
+  /user:
+    get:
+      description: Get profile of currently logged-in user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current authenticated user
+      tags:
+      - user
+  /user/avatar:
+    delete:
+      description: Remove avatar from user profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user avatar
+      tags:
+      - user
+    get:
+      description: Get avatar URL of current authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user avatar
+      tags:
+      - user
+    put:
+      consumes:
+      - multipart/form-data
+      - application/json
+      description: Update user profile avatar by URL or multipart upload
+      parameters:
+      - description: Avatar image upload
+        in: formData
+        name: avatar
+        type: file
+      - description: Avatar URL payload
+        in: body
+        name: input
+        schema:
+          $ref: '#/definitions/handler.SetAvatarDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set user avatar
+      tags:
+      - user
+  /user/avatar/{id}:
+    get:
+      description: Get avatar URL of any user by their user ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get user avatar by ID
+      tags:
+      - user
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and the JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
