@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Server {
+  id          Int    @id @default(autoincrement())
+  ip          String @unique
+  realIp      String @unique
+  description String
+  name        String
+  tags        Tag[]
+  region      Region
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt() @map("updated_at")
+}
+
+enum Region {
+  CIS
+  EUROPE
+  ASIA
+  AFRICA
+  NORTHAMERICA
+  SOUTHAMERICA
+}
+
+enum Tag {
+  PVP
+  PVE
+  RP
+  RPG
+  VANILLA
+  SURVIVAL
+  MINIGAMES
+}
