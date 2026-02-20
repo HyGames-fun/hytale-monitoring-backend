@@ -1,20 +1,13 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-} from '@nestjs/common'
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common'
 import { ServerService } from './server.service'
-import { CreateServerDto } from './create-server.dto'
+import { ServerDto } from './server.dto'
 
 @Controller('server')
 export class ServerController {
   constructor(private readonly serverService: ServerService) {}
 
   @Post()
-  create(@Body() createServerDto: CreateServerDto) {
+  create(@Body() createServerDto: ServerDto) {
     return this.serverService.create(createServerDto)
   }
 

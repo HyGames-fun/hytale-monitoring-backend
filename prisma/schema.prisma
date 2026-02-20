@@ -7,17 +7,34 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id Int @id @default(autoincrement())
+
+  name     String
+  email    String @unique
+  password String
+
+  servers Server[]
+
+  @@map("user")
+}
+
 model Server {
   id          Int    @id @default(autoincrement())
   ip          String @unique
-  realIp      String @unique
+  realIp      String @unique @map("real_ip")
   description String
   name        String
   tags        Tag[]
   region      Region
 
+  userId Int?  @map("user_id")
+  user   User? @relation(fields: [userId], references: [id])
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt() @map("updated_at")
+
+  @@map("server")
 }
 
 enum Region {

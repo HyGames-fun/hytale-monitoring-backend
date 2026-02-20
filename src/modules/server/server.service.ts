@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common'
-import { CreateServerDto } from './create-server.dto'
-import { PrismaService } from '../../prisma/prisma.service';
+import { ServerDto } from './server.dto'
+import { PrismaService } from '../../prisma/prisma.service'
 
 @Injectable()
 export class ServerService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(createServerDto: CreateServerDto) {
+  create(createServerDto: ServerDto) {
     return 'This action adds a new server'
   }
 
