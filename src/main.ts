@@ -31,6 +31,7 @@ async function bootstrap() {
   app.use(
     '/docs',
     apiReference({
+      theme: 'default',
       content: document,
     }),
   )
