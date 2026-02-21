@@ -397,57 +397,6 @@ paths:
       summary: Find servers page
       tags:
       - server
-  /server/{id}/verify/confirm:
-    post:
-      description: Verify TXT record for server domain ownership
-      parameters:
-      - description: Server ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.SuccessResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      summary: Confirm DNS verification
-      tags:
-      - server
-  /server/{id}/verify/init:
-    post:
-      description: Generate DNS challenge token and instructions for server domain
-        verification
-      parameters:
-      - description: Server ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.SuccessResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      summary: Initiate DNS verification
-      tags:
-      - server
   /server/create:
     post:
       consumes:

@@ -29,6 +29,12 @@ func (h *CatalogHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Get("/", h.HealthCheck)
+	r.Get("/docs", ScalarHandler)
+	r.Get("/reference", ScalarHandler)
+	r.Get("/reference/*", ScalarHandler)
+	r.Get("/openapi.json", OpenAPIHandler)
+	r.Get("/swagger.json", OpenAPIHandler)
+	r.Get("/docs/openapi.json", OpenAPIHandler)
 
 	r.Route("/server", func(sr chi.Router) {
 		sr.Post("/create", h.CreateServer)
@@ -42,18 +48,34 @@ func (h *CatalogHandler) Routes() chi.Router {
 		sr.Get("/id/{nameId}", h.FindOne)
 		sr.Patch("/id/{id}", h.UpdateServer)
 		sr.Delete("/id/{id}", h.DeleteServer)
-
-		sr.Post("/{id}/verify/init", h.InitVerification)
-		sr.Post("/{id}/verify/confirm", h.ConfirmVerification)
 	})
 
 	return r
 }
 
+// HealthCheck godoc
+// @Summary      Health check
+// @Description  Check service health status
+// @Tags         health
+// @Produce      json
+// @Success      200 {object} response.SuccessResponse
+// @Router       / [get]
 func (h *CatalogHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, map[string]any{"status": "ok"})
 }
 
+// CreateServer godoc
+// @Summary      Create a new server
+// @Description  Register a new Hytale server in the monitoring catalog
+// @Tags         server
+// @Accept       json
+// @Produce      json
+// @Param        input body domain.CreateServerDTO true "Server creation payload"
+// @Success      200 {object} response.SuccessResponse
+// @Failure      400 {object} response.ValidationErrorResponse
+// @Failure      409 {object} response.ErrorResponse
+// @Failure      500 {object} response.ErrorResponse
+// @Router       /server/create [post]
 func (h *CatalogHandler) CreateServer(w http.ResponseWriter, r *http.Request) {
 	var dto domain.CreateServerDTO
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
@@ -79,6 +101,17 @@ func (h *CatalogHandler) CreateServer(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, server)
 }
 
+// LikeServer godoc
+// @Summary      Like or unlike a server
+// @Description  Vote for a server with Turnstile verification or user session
+// @Tags         server
+// @Produce      json
+// @Param        id query int true "Server ID"
+// @Param        token query string false "Cloudflare Turnstile token for guests"
+// @Success      200 {object} response.SuccessResponse
+// @Failure      400 {object} response.ErrorResponse
+// @Failure      500 {object} response.ErrorResponse
+// @Router       /server/like [post]
 func (h *CatalogHandler) LikeServer(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
@@ -113,6 +146,17 @@ func (h *CatalogHandler) LikeServer(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, map[string]any{"liked": isLiked})
 }
 
+// FindPage godoc
+// @Summary      Find servers page
+// @Description  Retrieve paginated list of servers with filters and sorting
+// @Tags         server
+// @Accept       json
+// @Produce      json
+// @Param        input body domain.FindPageDTO true "Pagination and filter criteria"
+// @Success      200 {object} response.SuccessResponse
+// @Failure      400 {object} response.ValidationErrorResponse
+// @Failure      500 {object} response.ErrorResponse
+// @Router       /server [post]
 func (h *CatalogHandler) FindPage(w http.ResponseWriter, r *http.Request) {
 	var dto domain.FindPageDTO
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
@@ -137,6 +181,14 @@ func (h *CatalogHandler) FindPage(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, servers)
 }
 
+// FindQuantity godoc
+// @Summary      Get total servers count
+// @Description  Get the total count of registered servers
+// @Tags         server
+// @Produce      json
+// @Success      200 {object} response.SuccessResponse
+// @Failure      500 {object} response.ErrorResponse
+// @Router       /server/quantity [get]
 func (h *CatalogHandler) FindQuantity(w http.ResponseWriter, r *http.Request) {
 	count, err := h.serverService.FindQuantity()
 	if err != nil {
@@ -146,6 +198,15 @@ func (h *CatalogHandler) FindQuantity(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, count)
 }
 
+// GetStatus godoc
+// @Summary      Get online status of a server
+// @Description  Check online status of a server by ID
+// @Tags         server
+// @Produce      json
+// @Param        id query int true "Server ID"
+// @Success      200 {object} response.SuccessResponse
+// @Failure      400 {object} response.ErrorResponse
+// @Router       /server/status [get]
 func (h *CatalogHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
@@ -168,6 +229,15 @@ func (h *CatalogHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, status)
 }
 
+// GetStatuses godoc
+// @Summary      Get online statuses for multiple servers
+// @Description  Batch check online statuses by server IDs
+// @Tags         server
+// @Produce      json
+// @Param        ids query string true "Comma-separated server IDs"
+// @Success      200 {object} response.SuccessResponse
+// @Failure      400 {object} response.ErrorResponse
+// @Router       /server/statuses [get]
 func (h *CatalogHandler) GetStatuses(w http.ResponseWriter, r *http.Request) {
 	idsParam := r.URL.Query()["ids"]
 	if len(idsParam) == 0 {
@@ -199,6 +269,17 @@ func (h *CatalogHandler) GetStatuses(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, statuses)
 }
 
+// Search godoc
+// @Summary      Search servers
+// @Description  Full-text search servers by name, description or tags
+// @Tags         server
+// @Produce      json
+// @Param        query query string false "Search query"
+// @Param        page query int false "Page number"
+// @Param        limit query int false "Items per page"
+// @Success      200 {object} response.SuccessResponse
+// @Failure      400 {object} response.ErrorResponse
+// @Router       /server/search [get]
 func (h *CatalogHandler) Search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("query")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -217,6 +298,15 @@ func (h *CatalogHandler) Search(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, results)
 }
 
+// FindOne godoc
+// @Summary      Find server by nameId
+// @Description  Get detailed server information by kebab-case nameId
+// @Tags         server
+// @Produce      json
+// @Param        nameId path string true "Server kebab-case nameId"
+// @Success      200 {object} response.SuccessResponse
+// @Failure      400 {object} response.ErrorResponse
+// @Router       /server/id/{nameId} [get]
 func (h *CatalogHandler) FindOne(w http.ResponseWriter, r *http.Request) {
 	nameID := chi.URLParam(r, "nameId")
 	user := middleware.GetUserFromContext(r.Context())
@@ -231,6 +321,18 @@ func (h *CatalogHandler) FindOne(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, server)
 }
 
+// UpdateServer godoc
+// @Summary      Update server details
+// @Description  Update server metadata by ID
+// @Tags         server
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "Server ID"
+// @Param        input body domain.UpdateServerDTO true "Update server payload"
+// @Success      200 {object} response.SuccessResponse
+// @Failure      400 {object} response.ValidationErrorResponse
+// @Failure      404 {object} response.ErrorResponse
+// @Router       /server/id/{id} [patch]
 func (h *CatalogHandler) UpdateServer(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
@@ -259,6 +361,16 @@ func (h *CatalogHandler) UpdateServer(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, server)
 }
 
+// DeleteServer godoc
+// @Summary      Delete server
+// @Description  Delete server by ID
+// @Tags         server
+// @Produce      json
+// @Param        id path int true "Server ID"
+// @Success      200 {object} response.SuccessResponse
+// @Failure      400 {object} response.ErrorResponse
+// @Failure      404 {object} response.ErrorResponse
+// @Router       /server/id/{id} [delete]
 func (h *CatalogHandler) DeleteServer(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
@@ -276,6 +388,14 @@ func (h *CatalogHandler) DeleteServer(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, server)
 }
 
+// GetLeaderboard godoc
+// @Summary      Get servers leaderboard
+// @Description  Get top servers ranked by score (likes and active players)
+// @Tags         server
+// @Produce      json
+// @Success      200 {object} response.SuccessResponse
+// @Failure      500 {object} response.ErrorResponse
+// @Router       /server/leaderboard [get]
 func (h *CatalogHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 	leaderboard, err := h.serverService.GetLeaderboard()
 	if err != nil {
@@ -283,54 +403,4 @@ func (h *CatalogHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	response.JSON(w, http.StatusOK, leaderboard)
-}
-
-func (h *CatalogHandler) InitVerification(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	serverID, err := strconv.Atoi(idStr)
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "Invalid server id")
-		return
-	}
-
-	user := middleware.GetUserFromContext(r.Context())
-	userID := 1
-	if user != nil {
-		userID = user.ID
-	}
-
-	resp, err := h.verificationService.InitVerification(serverID, userID)
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	response.JSON(w, http.StatusOK, resp)
-}
-
-func (h *CatalogHandler) ConfirmVerification(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	serverID, err := strconv.Atoi(idStr)
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "Invalid server id")
-		return
-	}
-
-	user := middleware.GetUserFromContext(r.Context())
-	userID := 1
-	if user != nil {
-		userID = user.ID
-	}
-
-	ok, msg, err := h.verificationService.ConfirmDNSVerification(serverID, userID)
-	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	if !ok {
-		response.Error(w, http.StatusBadRequest, msg)
-		return
-	}
-
-	response.JSON(w, http.StatusOK, map[string]any{"verified": true, "message": msg})
 }

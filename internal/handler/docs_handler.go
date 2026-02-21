@@ -18,7 +18,7 @@ func init() {
 
 	scalarHTML, err = scalar.ApiReferenceHTML(&scalar.Options{
 		SpecContent:  doc,
-		Theme:        scalar.ThemePurple,
+		Theme:        scalar.ThemeDefault,
 		Layout:       scalar.LayoutModern,
 		DarkMode:     true,
 		ShowSidebar:  true,
