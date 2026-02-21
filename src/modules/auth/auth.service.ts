@@ -1,17 +1,15 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { UserService } from '../user/user.service'
 import { PrismaService } from '../../prisma/prisma.service'
 import { JwtService } from '@nestjs/jwt'
 import { password } from 'bun'
 import { LoginDto } from './auth.dto'
 import { Payload } from './interfaces/payload.interface'
-import { StringValue } from 'ms';
-import { ConfigService } from '@nestjs/config';
-
+import { StringValue } from 'ms'
+import { ConfigService } from '@nestjs/config'
 
 @Injectable()
 export class AuthService {
-
   private readonly JWT_ACCESS_TOKEN_TTL: StringValue
   private readonly JWT_REFRESH_TOKEN_TTL: StringValue
 
@@ -21,8 +19,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {
-    this.JWT_ACCESS_TOKEN_TTL = this.configService.getOrThrow('JWT_ACCESS_TOKEN_TTL')
-    this.JWT_REFRESH_TOKEN_TTL = this.configService.getOrThrow('JWT_REFRESH_TOKEN_TTL')
+    this.JWT_ACCESS_TOKEN_TTL = this.configService.getOrThrow(
+      'JWT_ACCESS_TOKEN_TTL',
+    )
+    this.JWT_REFRESH_TOKEN_TTL = this.configService.getOrThrow(
+      'JWT_REFRESH_TOKEN_TTL',
+    )
   }
 
   async signIn(dto: LoginDto): Promise<{ access_token: string }> {

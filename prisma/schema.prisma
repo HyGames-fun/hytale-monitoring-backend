@@ -25,6 +25,7 @@ model Server {
   realIp      String @unique @map("real_ip")
   description String
   name        String
+  nameId      String @unique @map("name_id")
   tags        Tag[]
   region      Region
 

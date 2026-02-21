@@ -8,10 +8,12 @@ import {
 } from 'class-validator'
 import { IsDomain } from '../../decorators/domain.decorator'
 import { IsIp } from '../../decorators/ip.decorator'
+import { IsKebabCase } from '../../decorators/kebab-case.decorator'
 
 export class ServerDto {
   id?: number
   ip?: string
+  nameId?: string
   realIp?: string
   description?: string
   name?: string
@@ -36,6 +38,11 @@ export class CreateServerDto {
   @IsString()
   @IsNotEmpty()
   name: string
+
+  @IsString()
+  @IsNotEmpty()
+  @IsKebabCase()
+  nameId?: string
 
   @IsOptional()
   @IsArray()
