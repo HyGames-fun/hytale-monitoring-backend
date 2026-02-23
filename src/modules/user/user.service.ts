@@ -38,20 +38,6 @@ export class UserService {
     })
   }
 
-  async findOne(id?: number, email?: string) {
-    if (!id && !email) return null
-
-    const params = { id, email }
-
-    const user = await this.prisma.user.findUnique({
-      where: params,
-    })
-
-    if (!user) throw new NotFoundException('User not found!')
-
-    return user
-  }
-
   async findOneOrNull(params: {
     id?: number
     email?: string
@@ -68,6 +54,16 @@ export class UserService {
     return this.prisma.user.findUnique({
       where: checkedParams,
     })
+  }
+
+  async findOneById(id: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    })
+
+    if (!user) throw new NotFoundException('User not found!')
+
+    return user
   }
 
   async findOneForLogin(email: string) {

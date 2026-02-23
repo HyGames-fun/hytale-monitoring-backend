@@ -125,9 +125,9 @@ export class AuthService {
   }
 
   async validate(payload: Payload) {
-    const user: User | null = await this.userService.findOne(payload.id)
+    const user: User = await this.userService.findOneById(payload.id)
 
-    return user!
+    return user
   }
 
   async discordCallback(res: Response, code: string) {
