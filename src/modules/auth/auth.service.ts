@@ -14,17 +14,23 @@ import { Response, Request } from 'express'
 import { isDev } from '../../utils/is-dev.util'
 import { User } from '../../../generated/prisma/client'
 import { UserDto } from '../user/user.dto'
+import { HttpService } from '@nestjs/axios'
+import { firstValueFrom } from 'rxjs'
 
 @Injectable()
 export class AuthService {
   private readonly JWT_ACCESS_TOKEN_TTL: StringValue
   private readonly JWT_REFRESH_TOKEN_TTL: StringValue
   private readonly COOKIE_DOMAIN: string
+  private readonly DISCORD_CLIENT_ID: string
+  private readonly DISCORD_CLIENT_SECRET: string
+  private readonly DISCORD_REDIRECT_URI: string
 
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
   ) {
     this.JWT_ACCESS_TOKEN_TTL = this.configService.getOrThrow(
       'JWT_ACCESS_TOKEN_TTL',
@@ -33,6 +39,13 @@ export class AuthService {
       'JWT_REFRESH_TOKEN_TTL',
     )
     this.COOKIE_DOMAIN = this.configService.getOrThrow('COOKIE_DOMAIN')
+    this.DISCORD_CLIENT_ID = this.configService.getOrThrow('DISCORD_CLIENT_ID')
+    this.DISCORD_CLIENT_SECRET = this.configService.getOrThrow(
+      'DISCORD_CLIENT_SECRET',
+    )
+    this.DISCORD_REDIRECT_URI = this.configService.getOrThrow(
+      'DISCORD_REDIRECT_URI',
+    )
   }
 
   async login(res: Response, dto: LoginDto) {
@@ -47,7 +60,7 @@ export class AuthService {
   }
 
   async register(res: Response, dto: RegisterDto) {
-    const user: User = await this.userService.create(dto)
+    const user: User = await this.userService.register(dto)
 
     const payload: Payload = { id: user.id }
 
@@ -113,5 +126,75 @@ export class AuthService {
     const user: User | null = await this.userService.findOne(payload.id)
 
     return user!
+  }
+
+  async discordCallback(res: Response, code: string) {
+    const response = await this.getDiscordResponse(code)
+
+    const accessToken = response.data.access_token as string
+    const refreshToken = response.data.refresh_token as string
+
+    const userResponse = await this.getDiscordUser(accessToken)
+
+    const userResponseId = userResponse.data.user.id as string
+    const userResponseUsername = userResponse.data.user.username as string
+    const userResponseAvatar = userResponse.data.user.avatar as string
+
+    const existingUser: UserDto | null = await this.userService.findOneOrNull({
+      discordId: userResponseId,
+    })
+
+    const expiresIn = response.data.expires_in as number
+
+    this.setCookie(res, refreshToken, new Date(Date.now() + expiresIn))
+
+    if (existingUser) {
+      const payload: Payload = { id: existingUser.id! }
+      return this.auth(res, payload)
+    }
+
+    const avatarUrl = `https://cdn.discordapp.com/avatars/${userResponseId}/${userResponseAvatar}.png`
+
+    const user: UserDto = await this.userService.discordRegister({
+      name: userResponseUsername,
+      discordId: userResponseId,
+      avatar: avatarUrl,
+    })
+
+    const payload: Payload = { id: user.id! }
+
+    return this.auth(res, payload)
+  }
+
+  private getDiscordResponse(code: string) {
+    return firstValueFrom(
+      this.httpService.post(
+        '/token',
+        {
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: this.DISCORD_REDIRECT_URI,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          auth: {
+            username: this.DISCORD_CLIENT_ID,
+            password: this.DISCORD_CLIENT_SECRET,
+          },
+        },
+      ),
+    )
+  }
+
+  private getDiscordUser(accessToken: string) {
+    return firstValueFrom(
+      this.httpService.get('/@me', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }),
+    )
   }
 }

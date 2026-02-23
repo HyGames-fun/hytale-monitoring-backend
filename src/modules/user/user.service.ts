@@ -4,14 +4,21 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
-import { RegisterDto } from '../auth/auth.dto'
+import { DiscordRegisterDto, RegisterDto } from '../auth/auth.dto'
 import { password } from 'bun'
+import { UpdateUserDto } from './user.dto'
 
 @Injectable()
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: RegisterDto) {
+  async discordRegister(dto: DiscordRegisterDto) {
+    return this.prisma.user.create({
+      data: dto,
+    })
+  }
+
+  async register(dto: RegisterDto) {
     const user = await this.prisma.user.findUnique({
       where: {
         email: dto.email,
@@ -45,13 +52,21 @@ export class UserService {
     return user
   }
 
-  async findOneOrNull(id?: number, email?: string) {
-    if (!id && !email) return null
+  async findOneOrNull(params: {
+    id?: number
+    email?: string
+    discordId?: string
+  }) {
+    if (!params.id && !params.email && !params.discordId) return null
 
-    const params = { id, email }
+    const checkedParams = {
+      id: params.id,
+      email: params.email,
+      discordId: params.discordId,
+    }
 
     return this.prisma.user.findUnique({
-      where: params,
+      where: checkedParams,
     })
   }
 
@@ -84,5 +99,12 @@ export class UserService {
     if (!user) throw new NotFoundException('User not found!')
 
     return user
+  }
+
+  async update(id: number, dto: UpdateUserDto) {
+    return this.prisma.user.update({
+      where: { id },
+      data: dto,
+    })
   }
 }

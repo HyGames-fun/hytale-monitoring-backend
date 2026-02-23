@@ -6,11 +6,17 @@ import { ConfigService } from '@nestjs/config'
 import { getJwtConfig } from '../../../configs/jwt.config'
 import { UserModule } from '../user/user.module'
 import { JwtStrategy } from './strategies/jwt.strategy'
+import { HttpModule } from '@nestjs/axios'
+import { getHttpConfig } from '../../../configs/http.config'
 
 @Module({
   imports: [
     JwtModule.registerAsync({
       useFactory: getJwtConfig,
+      inject: [ConfigService],
+    }),
+    HttpModule.registerAsync({
+      useFactory: getHttpConfig,
       inject: [ConfigService],
     }),
     UserModule,

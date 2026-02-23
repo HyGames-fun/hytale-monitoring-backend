@@ -1,5 +1,11 @@
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
 
+export class DiscordRegisterDto {
+  name: string
+  avatar: string
+  discordId: string
+}
+
 export class RegisterDto {
   @IsString()
   @IsNotEmpty()
