@@ -1,9 +1,9 @@
 import { Region, Tag } from '../../../generated/prisma/enums'
 import {
+  ArrayNotEmpty,
   IsArray,
   IsEnum,
   IsNotEmpty,
-  IsOptional,
   IsString,
 } from 'class-validator'
 import { IsDomain } from '../../decorators/domain.decorator'
@@ -13,8 +13,8 @@ import { IsKebabCase } from '../../decorators/kebab-case.decorator'
 export class ServerDto {
   id?: number
   ip?: string
+  domain?: string
   nameId?: string
-  realIp?: string
   description?: string
   name?: string
   tags?: Tag[]
@@ -30,7 +30,7 @@ export class CreateServerDto {
   @IsString()
   @IsNotEmpty()
   @IsIp()
-  realIp: string
+  domain: string
 
   @IsString()
   description: string
@@ -44,8 +44,8 @@ export class CreateServerDto {
   @IsKebabCase()
   nameId?: string
 
-  @IsOptional()
   @IsArray()
+  @ArrayNotEmpty()
   @IsEnum(Tag, { each: true })
   tags: Tag[]
 
