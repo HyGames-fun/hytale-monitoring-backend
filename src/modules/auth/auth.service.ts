@@ -88,7 +88,7 @@ export class AuthService {
   }
 
   logout(res: Response) {
-    this.setCookie(res, 'refreshToken', new Date(0))
+    this.setCookie(res, '', new Date(0))
   }
 
   private auth(res: Response, payload: Payload) {
