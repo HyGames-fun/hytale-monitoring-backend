@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -15,7 +16,8 @@ import { isDev } from '../../utils/is-dev.util'
 import { User } from '../../../generated/prisma/client'
 import { UserDto } from '../user/user.dto'
 import { HttpService } from '@nestjs/axios'
-import { firstValueFrom } from 'rxjs'
+import { catchError, firstValueFrom } from 'rxjs'
+import { AxiosError } from 'axios'
 
 @Injectable()
 export class AuthService {
@@ -184,6 +186,10 @@ export class AuthService {
             password: this.DISCORD_CLIENT_SECRET,
           },
         },
+      ).pipe(
+        catchError(() => {
+          throw new BadRequestException('Discord OAuth failed')
+        })
       ),
     )
   }
@@ -194,7 +200,11 @@ export class AuthService {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }),
+      }).pipe(
+        catchError(() => {
+          throw new BadRequestException('Discord user getting failed')
+        })
+      ),
     )
   }
 }

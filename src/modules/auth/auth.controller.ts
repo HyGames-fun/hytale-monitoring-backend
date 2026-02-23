@@ -34,11 +34,13 @@ export class AuthController {
     return this.authService.login(res, dto)
   }
 
+  @Public()
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
     this.authService.logout(res)
   }
 
+  @Public()
   @Post('refresh')
   refresh(@Res({ passthrough: true }) res: Response, @Req() req: Request) {
     return this.authService.refresh(res, req)
