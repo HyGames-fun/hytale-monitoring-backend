@@ -170,41 +170,45 @@ export class AuthService {
 
   private getDiscordResponse(code: string) {
     return firstValueFrom(
-      this.httpService.post(
-        '/token',
-        {
-          grant_type: 'authorization_code',
-          code,
-          redirect_uri: this.DISCORD_REDIRECT_URI,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+      this.httpService
+        .post(
+          '/token',
+          {
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: this.DISCORD_REDIRECT_URI,
           },
-          auth: {
-            username: this.DISCORD_CLIENT_ID,
-            password: this.DISCORD_CLIENT_SECRET,
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            auth: {
+              username: this.DISCORD_CLIENT_ID,
+              password: this.DISCORD_CLIENT_SECRET,
+            },
           },
-        },
-      ).pipe(
-        catchError(() => {
-          throw new BadRequestException('Discord OAuth failed')
-        })
-      ),
+        )
+        .pipe(
+          catchError(() => {
+            throw new BadRequestException('Discord OAuth failed')
+          }),
+        ),
     )
   }
 
   private getDiscordUser(accessToken: string) {
     return firstValueFrom(
-      this.httpService.get('/@me', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }).pipe(
-        catchError(() => {
-          throw new BadRequestException('Discord user getting failed')
+      this.httpService
+        .get('/@me', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         })
-      ),
+        .pipe(
+          catchError(() => {
+            throw new BadRequestException('Discord user getting failed')
+          }),
+        ),
     )
   }
 }
