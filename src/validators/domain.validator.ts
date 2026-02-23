@@ -8,18 +8,20 @@ import dns from 'dns/promises'
 @ValidatorConstraint({ name: 'IsDomain', async: true })
 export class IsDomainValidator implements ValidatorConstraintInterface {
   validate(value: string): Promise<boolean> | boolean {
+    if (!value) return false
+
     return domainExists(value)
   }
 
   defaultMessage(validationArguments?: ValidationArguments): string {
-    return `Domain ${validationArguments?.value} does not exist`
+    return `domain ${validationArguments?.value} does not exist`
   }
 }
 
 async function domainExists(domain: string) {
   try {
-    const address = await dns.resolve(domain)
-    return address.length > 0
+    await dns.lookup(domain)
+    return true
   } catch (e) {
     return false
   }

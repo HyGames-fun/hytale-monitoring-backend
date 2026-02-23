@@ -3,12 +3,13 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsEnum,
-  IsNotEmpty,
-  IsString,
+  IsNotEmpty, IsOptional,
+  IsString, Length,
 } from 'class-validator'
 import { IsDomain } from '../../decorators/domain.decorator'
 import { IsIp } from '../../decorators/ip.decorator'
 import { IsKebabCase } from '../../decorators/kebab-case.decorator'
+import { Transform } from 'class-transformer'
 
 export class ServerDto {
   id?: number
@@ -22,27 +23,30 @@ export class ServerDto {
 }
 
 export class CreateServerDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  @IsDomain()
-  ip: string
+  @IsIp()
+  ip?: string
 
   @IsString()
-  @IsNotEmpty()
-  @IsIp()
+  @IsDomain()
   domain: string
 
+  @Transform(({ value }) => value?.trim())
   @IsString()
+  @Length(10, 300)
   description: string
 
+  @Transform(({ value }) => value?.trim())
   @IsString()
-  @IsNotEmpty()
+  @Length(2, 30)
   name: string
 
+  @Transform(({ value }) => value?.trim())
   @IsString()
-  @IsNotEmpty()
+  @Length(2, 30)
   @IsKebabCase()
-  nameId?: string
+  nameId: string
 
   @IsArray()
   @ArrayNotEmpty()

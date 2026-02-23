@@ -8,6 +8,8 @@ import net from 'net'
 @ValidatorConstraint({ name: 'IsIp', async: true })
 export class IsIpValidator implements ValidatorConstraintInterface {
   validate(value: string): Promise<boolean> | boolean {
+    if (!value) return false
+
     const [host, port] = value.split(':')
 
     if (!host || !port || isNaN(+port)) return false
@@ -16,7 +18,7 @@ export class IsIpValidator implements ValidatorConstraintInterface {
   }
 
   defaultMessage(validationArguments?: ValidationArguments): string {
-    return `Host or port is not reachable in ${validationArguments?.value}`
+    return `host or port is not reachable in ${validationArguments?.value}`
   }
 }
 

@@ -1,14 +1,27 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common'
+import { Controller, Get, Post, Body, Param, Delete, Query, ParseIntPipe } from '@nestjs/common'
 import { ServerService } from './server.service'
-import { ServerDto } from './server.dto'
+import { CreateServerDto } from './server.dto'
+import { ApiBearerAuth } from '@nestjs/swagger'
+import { Authorized } from '../../decorators/autrorized.decorator'
+import type { User } from '../../../generated/prisma/client'
 
 @Controller('server')
 export class ServerController {
   constructor(private readonly serverService: ServerService) {}
 
-  @Post()
-  create(@Body() createServerDto: ServerDto) {
-    return this.serverService.create(createServerDto)
+  @ApiBearerAuth()
+  @Post('create')
+  create(@Body() dto: CreateServerDto) {
+    return this.serverService.create(dto)
+  }
+
+  @ApiBearerAuth()
+  @Post('like')
+  like(
+    @Query('id', ParseIntPipe) id: number,
+    @Authorized() user: User
+  ) {
+    return this.serverService.like(id, user)
   }
 
   @Get()
