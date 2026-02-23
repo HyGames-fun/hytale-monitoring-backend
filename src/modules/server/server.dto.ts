@@ -3,13 +3,19 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsEnum,
-  IsNotEmpty, IsOptional,
-  IsString, Length,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+  Min,
+  ValidateNested,
 } from 'class-validator'
 import { IsDomain } from '../../decorators/domain.decorator'
 import { IsIp } from '../../decorators/ip.decorator'
 import { IsKebabCase } from '../../decorators/kebab-case.decorator'
-import { Transform } from 'class-transformer'
+import { Transform, Type } from 'class-transformer'
 
 export class ServerDto {
   id?: number
@@ -20,6 +26,47 @@ export class ServerDto {
   name?: string
   tags?: Tag[]
   region?: Region
+}
+
+class FiltersDto {
+  @IsOptional()
+  @IsArray()
+  @IsEnum(Tag, { each: true })
+  tags?: Tag[]
+
+  @IsOptional()
+  @IsEnum(Region)
+  region?: Region
+}
+
+class OrderDto {
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  likes?: 'asc' | 'desc'
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  createdAt?: 'asc' | 'desc'
+}
+
+export class FindPageDto {
+  @IsInt()
+  @Min(0)
+  page: number
+
+  @IsInt()
+  @Min(1)
+  quantity: number
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => FiltersDto)
+  filters?: FiltersDto
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => OrderDto)
+  order?: OrderDto
 }
 
 export class CreateServerDto {
