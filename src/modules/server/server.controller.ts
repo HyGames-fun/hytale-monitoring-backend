@@ -13,6 +13,7 @@ import { CreateServerDto, FindPageDto } from './server.dto'
 import { ApiBearerAuth } from '@nestjs/swagger'
 import { Authorized } from '../../decorators/autrorized.decorator'
 import type { User } from '../../../generated/prisma/client'
+import { Public } from '../../decorators/public.decorator'
 
 @Controller('server')
 export class ServerController {
@@ -30,6 +31,7 @@ export class ServerController {
     return this.serverService.like(id, user)
   }
 
+  @Public()
   @Post()
   findPage(@Body() dto: FindPageDto) {
     return this.serverService.findPage(dto)
