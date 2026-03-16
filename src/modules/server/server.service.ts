@@ -2,7 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  UnauthorizedException,
+  UnauthorizedException
 } from '@nestjs/common'
 import { CreateServerDto, FindPageDto } from './server.dto'
 import { PrismaService } from '../../prisma/prisma.service'
@@ -15,12 +15,12 @@ export class ServerService {
   async create(dto: CreateServerDto) {
     try {
       return await this.prisma.server.create({
-        data: dto,
+        data: dto
       })
     } catch (e) {
       if (e.code === 'P2002') {
         throw new ConflictException(
-          e.meta.driverAdapterError.cause.originalMessage,
+          e.meta.driverAdapterError.cause.originalMessage
         )
       }
       throw e
@@ -30,34 +30,34 @@ export class ServerService {
   async like(id: number, user: User) {
     const userWithLikes = await this.prisma.user.findUnique({
       where: {
-        id: user.id,
+        id: user.id
       },
       select: {
         likedServers: {
           select: {
-            id: true,
-          },
-        },
-      },
+            id: true
+          }
+        }
+      }
     })
 
     if (!userWithLikes) throw new UnauthorizedException('User not found')
 
     const isLiked = userWithLikes.likedServers.some(
-      (userLikes) => userLikes.id === id,
+      (userLikes) => userLikes.id === id
     )
 
     try {
       await this.prisma.server.update({
         where: {
-          id,
+          id
         },
         data: {
           likedUsers: isLiked
             ? { disconnect: { id: user.id } }
             : { connect: { id: user.id } },
-          likes: isLiked ? { decrement: 1 } : { increment: 1 },
-        },
+          likes: isLiked ? { decrement: 1 } : { increment: 1 }
+        }
       })
     } catch (e) {
       if (e.code === 'P2025') {
@@ -77,14 +77,14 @@ export class ServerService {
         ...(filters?.region && { region: filters.region }),
         ...(filters?.tags && {
           tags: {
-            hasSome: filters.tags,
-          },
-        }),
+            hasSome: filters.tags
+          }
+        })
       },
       orderBy: [
         ...(order?.likes ? [{ likes: order.likes }] : []),
-        ...(order?.createdAt ? [{ createdAt: order.createdAt }] : []),
-      ],
+        ...(order?.createdAt ? [{ createdAt: order.createdAt }] : [])
+      ]
     })
   }
 

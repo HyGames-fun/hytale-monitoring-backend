@@ -6,7 +6,7 @@ import {
   Param,
   Delete,
   Query,
-  ParseIntPipe,
+  ParseIntPipe
 } from '@nestjs/common'
 import { ServerService } from './server.service'
 import { CreateServerDto, FindPageDto } from './server.dto'

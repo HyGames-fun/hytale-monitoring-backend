@@ -4,8 +4,11 @@ import { ValidationPipe } from '@nestjs/common'
 import cookieParser from 'cookie-parser'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { apiReference } from '@scalar/nestjs-api-reference'
-import { AuthGuard } from '@nestjs/passport'
 import { JwtGuard } from './guards/auth.guard'
+import { GlobalFilter } from './filters/global.filter'
+import { ValidationError } from 'class-validator'
+import { ValidationException } from './exceptions/validation.exception'
+import { GlobalInterceptor } from './interceptors/global.interceptor'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -17,8 +20,13 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
-    }),
+      exceptionFactory: (errors) => new ValidationException(errors)
+    })
   )
+
+  app.useGlobalFilters(new GlobalFilter())
+
+  app.useGlobalInterceptors(new GlobalInterceptor())
 
   app.use(cookieParser())
 
@@ -37,8 +45,8 @@ async function bootstrap() {
     '/docs',
     apiReference({
       theme: 'default',
-      content: document,
-    }),
+      content: document
+    })
   )
 
   await app.listen(process.env.PORT ?? 3000)

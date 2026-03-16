@@ -13,15 +13,15 @@ import { getHttpConfig } from '../../../configs/http.config'
   imports: [
     JwtModule.registerAsync({
       useFactory: getJwtConfig,
-      inject: [ConfigService],
+      inject: [ConfigService]
     }),
     HttpModule.registerAsync({
       useFactory: getHttpConfig,
-      inject: [ConfigService],
+      inject: [ConfigService]
     }),
-    UserModule,
+    UserModule
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy]
 })
 export class AuthModule {}

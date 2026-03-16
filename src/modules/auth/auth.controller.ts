@@ -7,7 +7,7 @@ import {
   Query,
   Redirect,
   Req,
-  Res,
+  Res
 } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import type { Response, Request } from 'express'
@@ -23,7 +23,7 @@ export class AuthController {
   @Post('register')
   register(
     @Res({ passthrough: true }) res: Response,
-    @Body() dto: RegisterDto,
+    @Body() dto: RegisterDto
   ) {
     return this.authService.register(res, dto)
   }
@@ -50,7 +50,7 @@ export class AuthController {
   @Get('discord/login')
   @Redirect(
     'https://discord.com/oauth2/authorize?client_id=1475225594282381513&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A4242%2Fapi%2Fauth%2Fdiscord%2Fcallback&scope=identify',
-    HttpStatus.FOUND,
+    HttpStatus.FOUND
   )
   discordLogin() {}
 
@@ -58,7 +58,7 @@ export class AuthController {
   @Get('discord/callback')
   discordCallback(
     @Res({ passthrough: true }) res: Response,
-    @Query('code', UndefinedPipe) code: string,
+    @Query('code', UndefinedPipe) code: string
   ) {
     return this.authService.discordCallback(res, code)
   }

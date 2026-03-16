@@ -2,7 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
+  UnauthorizedException
 } from '@nestjs/common'
 import { UserService } from '../user/user.service'
 import { JwtService } from '@nestjs/jwt'
@@ -32,21 +32,21 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly httpService: HttpService,
+    private readonly httpService: HttpService
   ) {
     this.JWT_ACCESS_TOKEN_TTL = this.configService.getOrThrow(
-      'JWT_ACCESS_TOKEN_TTL',
+      'JWT_ACCESS_TOKEN_TTL'
     )
     this.JWT_REFRESH_TOKEN_TTL = this.configService.getOrThrow(
-      'JWT_REFRESH_TOKEN_TTL',
+      'JWT_REFRESH_TOKEN_TTL'
     )
     this.COOKIE_DOMAIN = this.configService.getOrThrow('COOKIE_DOMAIN')
     this.DISCORD_CLIENT_ID = this.configService.getOrThrow('DISCORD_CLIENT_ID')
     this.DISCORD_CLIENT_SECRET = this.configService.getOrThrow(
-      'DISCORD_CLIENT_SECRET',
+      'DISCORD_CLIENT_SECRET'
     )
     this.DISCORD_REDIRECT_URI = this.configService.getOrThrow(
-      'DISCORD_REDIRECT_URI',
+      'DISCORD_REDIRECT_URI'
     )
   }
 
@@ -106,7 +106,7 @@ export class AuthService {
       domain: this.COOKIE_DOMAIN,
       expires,
       secure: !isDev(this.configService),
-      sameSite: !isDev(this.configService) ? 'none' : 'lax',
+      sameSite: !isDev(this.configService) ? 'none' : 'lax'
     })
   }
 
@@ -114,11 +114,11 @@ export class AuthService {
     const payload: Payload = { id }
 
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: this.JWT_REFRESH_TOKEN_TTL,
+      expiresIn: this.JWT_REFRESH_TOKEN_TTL
     })
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: this.JWT_ACCESS_TOKEN_TTL,
+      expiresIn: this.JWT_ACCESS_TOKEN_TTL
     })
 
     return { refreshToken, accessToken }
@@ -143,7 +143,7 @@ export class AuthService {
     const userResponseAvatar = userResponse.data.user.avatar as string
 
     const existingUser: UserDto | null = await this.userService.findOneOrNull({
-      discordId: userResponseId,
+      discordId: userResponseId
     })
 
     const expiresIn = response.data.expires_in as number
@@ -160,7 +160,7 @@ export class AuthService {
     const user: UserDto = await this.userService.discordRegister({
       name: userResponseUsername,
       discordId: userResponseId,
-      avatar: avatarUrl,
+      avatar: avatarUrl
     })
 
     const payload: Payload = { id: user.id! }
@@ -176,23 +176,23 @@ export class AuthService {
           {
             grant_type: 'authorization_code',
             code,
-            redirect_uri: this.DISCORD_REDIRECT_URI,
+            redirect_uri: this.DISCORD_REDIRECT_URI
           },
           {
             headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
+              'Content-Type': 'application/x-www-form-urlencoded'
             },
             auth: {
               username: this.DISCORD_CLIENT_ID,
-              password: this.DISCORD_CLIENT_SECRET,
-            },
-          },
+              password: this.DISCORD_CLIENT_SECRET
+            }
+          }
         )
         .pipe(
           catchError(() => {
             throw new BadRequestException('Discord OAuth failed')
-          }),
-        ),
+          })
+        )
     )
   }
 
@@ -201,14 +201,14 @@ export class AuthService {
       this.httpService
         .get('/@me', {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+            Authorization: `Bearer ${accessToken}`
+          }
         })
         .pipe(
           catchError(() => {
             throw new BadRequestException('Discord user getting failed')
-          }),
-        ),
+          })
+        )
     )
   }
 }

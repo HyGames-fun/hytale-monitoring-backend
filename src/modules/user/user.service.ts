@@ -1,7 +1,7 @@
 import {
   ConflictException,
   Injectable,
-  NotFoundException,
+  NotFoundException
 } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { DiscordRegisterDto, RegisterDto } from '../auth/auth.dto'
@@ -14,27 +14,27 @@ export class UserService {
 
   async discordRegister(dto: DiscordRegisterDto) {
     return this.prisma.user.create({
-      data: dto,
+      data: dto
     })
   }
 
   async register(dto: RegisterDto) {
     const user = await this.prisma.user.findUnique({
       where: {
-        email: dto.email,
-      },
+        email: dto.email
+      }
     })
 
     if (user)
       throw new ConflictException(
-        `User with email ${dto.email} already exists!`,
+        `User with email ${dto.email} already exists!`
       )
 
     return this.prisma.user.create({
       data: {
         ...dto,
-        password: await password.hash(dto.password),
-      },
+        password: await password.hash(dto.password)
+      }
     })
   }
 
@@ -48,17 +48,17 @@ export class UserService {
     const checkedParams = {
       id: params.id,
       email: params.email,
-      discordId: params.discordId,
+      discordId: params.discordId
     }
 
     return this.prisma.user.findUnique({
-      where: checkedParams,
+      where: checkedParams
     })
   }
 
   async findOneById(id: number) {
     const user = await this.prisma.user.findUnique({
-      where: { id },
+      where: { id }
     })
 
     if (!user) throw new NotFoundException('User not found!')
@@ -69,12 +69,12 @@ export class UserService {
   async findOneForLogin(email: string) {
     const user = await this.prisma.user.findUnique({
       where: {
-        email,
+        email
       },
       select: {
         id: true,
-        password: true,
-      },
+        password: true
+      }
     })
 
     if (!user) throw new NotFoundException('User not found!')
@@ -85,11 +85,11 @@ export class UserService {
   async findOneForRefresh(id: number) {
     const user = await this.prisma.user.findUnique({
       where: {
-        id,
+        id
       },
       select: {
-        id: true,
-      },
+        id: true
+      }
     })
 
     if (!user) throw new NotFoundException('User not found!')
@@ -100,7 +100,7 @@ export class UserService {
   async update(id: number, dto: UpdateUserDto) {
     return this.prisma.user.update({
       where: { id },
-      data: dto,
+      data: dto
     })
   }
 }

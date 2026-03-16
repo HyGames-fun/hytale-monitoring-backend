@@ -10,7 +10,7 @@ import { AuthService } from '../auth.service'
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private readonly configService: ConfigService,
-    private readonly authService: AuthService,
+    private readonly authService: AuthService
   ) {
     const jwtFromRequest = (req: Request): string | null =>
       ExtractJwt.fromAuthHeaderAsBearerToken()(req)
@@ -21,7 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       secretOrKey,
       jwtFromRequest,
       ignoreExpiration: false,
-      algorithms: ['HS256'],
+      algorithms: ['HS256']
     })
   }
 

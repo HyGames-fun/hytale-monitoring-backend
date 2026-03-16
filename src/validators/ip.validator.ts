@@ -1,7 +1,7 @@
 import {
   ValidationArguments,
   ValidatorConstraint,
-  ValidatorConstraintInterface,
+  ValidatorConstraintInterface
 } from 'class-validator'
 import net from 'net'
 
@@ -25,7 +25,7 @@ export class IsIpValidator implements ValidatorConstraintInterface {
 async function checkPort(
   host: string,
   port: string,
-  timeout: number = 3000,
+  timeout: number = 3000
 ): Promise<boolean> {
   return new Promise((resolve) => {
     const socket = new net.Socket()

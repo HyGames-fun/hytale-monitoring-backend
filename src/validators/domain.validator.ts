@@ -1,7 +1,7 @@
 import {
   ValidationArguments,
   ValidatorConstraint,
-  ValidatorConstraintInterface,
+  ValidatorConstraintInterface
 } from 'class-validator'
 import dns from 'dns/promises'
 

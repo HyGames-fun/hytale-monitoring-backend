@@ -1,7 +1,7 @@
 import {
   ValidationArguments,
   ValidatorConstraint,
-  ValidatorConstraintInterface,
+  ValidatorConstraintInterface
 } from 'class-validator'
 
 @ValidatorConstraint({ name: 'IsKebabCase', async: false })

@@ -10,14 +10,14 @@ import { UserModule } from './modules/user/user.module'
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,
+      isGlobal: true
     }),
     ServerModule,
     PrismaModule,
     AuthModule,
-    UserModule,
+    UserModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService]
 })
 export class AppModule {}
