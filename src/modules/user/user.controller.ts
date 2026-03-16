@@ -13,5 +13,4 @@ export class UserController {
   getCurrentUser(@Authorized() user: User) {
     return this.userService.getUser(user)
   }
-
 }

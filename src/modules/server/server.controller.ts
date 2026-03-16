@@ -33,8 +33,8 @@ export class ServerController {
 
   @Public()
   @Post()
-  findPage(@Body() dto: FindPageDto) {
-    return this.serverService.findPage(dto)
+  findPage(@Authorized() user: User | undefined, @Body() dto: FindPageDto) {
+    return this.serverService.findPage(dto, user)
   }
 
   @Public()

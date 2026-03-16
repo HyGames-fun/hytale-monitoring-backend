@@ -10,11 +10,7 @@ export class IsIpValidator implements ValidatorConstraintInterface {
   validate(value: string): Promise<boolean> | boolean {
     if (!value) return false
 
-    const [host, port] = value.split(':')
-
-    if (!host || !port || isNaN(+port)) return false
-
-    return checkPort(host, port)
+    return checkPort(value)
   }
 
   defaultMessage(validationArguments?: ValidationArguments): string {
@@ -22,11 +18,14 @@ export class IsIpValidator implements ValidatorConstraintInterface {
   }
 }
 
-async function checkPort(
-  host: string,
-  port: string,
+export async function checkPort(
+  value: string,
   timeout: number = 3000
 ): Promise<boolean> {
+  const [host, port] = value.split(':')
+
+  if (!host || !port || isNaN(+port)) return false
+
   return new Promise((resolve) => {
     const socket = new net.Socket()
 

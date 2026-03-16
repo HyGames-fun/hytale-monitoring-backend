@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common'
 import { CreateServerDto, FindPageDto } from './server.dto'
 import { PrismaService } from '../../prisma/prisma.service'
-import { Region, Tag, User } from '../../../generated/prisma/client'
+import { User } from '../../../generated/prisma/client'
+import { checkPort } from '../../validators/ip.validator'
 
 @Injectable()
 export class ServerService {
@@ -67,10 +68,10 @@ export class ServerService {
     }
   }
 
-  async findPage(dto: FindPageDto) {
+  async findPage(dto: FindPageDto, user: User | undefined) {
     const { page, quantity, filters, order } = dto
 
-    return this.prisma.server.findMany({
+    const servers = await this.prisma.server.findMany({
       skip: quantity * page,
       take: quantity,
       where: {
@@ -84,8 +85,22 @@ export class ServerService {
       orderBy: [
         ...(order?.likes ? [{ likes: order.likes }] : []),
         ...(order?.createdAt ? [{ createdAt: order.createdAt }] : [])
-      ]
+      ],
+      include: {
+        likedUsers: {
+          select: {
+            id: true
+          }
+        }
+      }
     })
+
+    servers.map((server) => ({
+      ...server,
+      liked: server.likedUsers.some((item) => item.id === user?.id),
+      isOnline: server.ip ? checkPort(server.ip) : undefined,
+      players: 10
+    }))
   }
 
   findOne(id: number) {
