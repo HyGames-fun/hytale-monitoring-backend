@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service'
 import { DiscordRegisterDto, RegisterDto } from '../auth/auth.dto'
 import { password } from 'bun'
 import { UpdateUserDto } from './user.dto'
+import { User } from '../../../generated/prisma/client'
 
 @Injectable()
 export class UserService {
@@ -102,5 +103,14 @@ export class UserService {
       where: { id },
       data: dto
     })
+  }
+
+  getUser(user: User) {
+    const { email, avatar, name } = user
+    return {
+      name,
+      email,
+      avatar
+    }
   }
 }
