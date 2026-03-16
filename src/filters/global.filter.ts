@@ -13,9 +13,9 @@ import { ValidationException } from '../exceptions/validation.exception'
 export class GlobalFilter<T> implements ExceptionFilter {
   private readonly logger = new Logger(GlobalFilter.name)
 
-  catch(exception: T, ctx: ArgumentsHost) {
-    const res: Response = ctx.switchToHttp().getResponse()
-    //this.logger.error(exception, ctx)
+  catch(exception: T, host: ArgumentsHost) {
+    const ctx = host.switchToHttp()
+    const res: Response = ctx.getResponse()
 
     if (exception instanceof ValidationException) {
       res.status(exception.getStatus()).json(exception.getResponse())
@@ -30,6 +30,8 @@ export class GlobalFilter<T> implements ExceptionFilter {
       })
       return
     }
+
+    this.logger.error(exception)
 
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       status: 'error',

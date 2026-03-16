@@ -37,12 +37,18 @@ export class ServerController {
     return this.serverService.findPage(dto)
   }
 
-  @Get(':id')
+  @Public()
+  @Get('quantity')
+  findQuantity() {
+    return this.serverService.findQuantity()
+  }
+
+  @Get('id/:id')
   findOne(@Param('id') id: string) {
     return this.serverService.findOne(+id)
   }
 
-  @Delete(':id')
+  @Delete('id/:id')
   remove(@Param('id') id: string) {
     return this.serverService.remove(+id)
   }

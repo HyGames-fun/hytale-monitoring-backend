@@ -92,6 +92,10 @@ export class ServerService {
     return `This action returns a #${id} server`
   }
 
+  async findQuantity() {
+    return this.prisma.server.count()
+  }
+
   remove(id: number) {
     return `This action removes a #${id} server`
   }
