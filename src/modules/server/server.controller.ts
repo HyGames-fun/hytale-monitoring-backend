@@ -6,7 +6,8 @@ import {
   Param,
   Delete,
   Query,
-  ParseIntPipe
+  ParseIntPipe,
+  Req
 } from '@nestjs/common'
 import { ServerService } from './server.service'
 import { CreateServerDto, FindPageDto } from './server.dto'
@@ -14,6 +15,7 @@ import { ApiBearerAuth } from '@nestjs/swagger'
 import { Authorized } from '../../decorators/autrorized.decorator'
 import type { User } from '../../../generated/prisma/client'
 import { Public } from '../../decorators/public.decorator'
+import type { Request } from 'express'
 
 @Controller('server')
 export class ServerController {
@@ -25,10 +27,15 @@ export class ServerController {
     return this.serverService.create(dto)
   }
 
-  @ApiBearerAuth()
+  @Public()
   @Post('like')
-  like(@Query('id', ParseIntPipe) id: number, @Authorized() user: User) {
-    return this.serverService.like(id, user)
+  like(
+    @Req() req: Request,
+    @Query('id', ParseIntPipe) id: number,
+    @Query('token') token?: string,
+    @Authorized() user?: User
+  ) {
+    return this.serverService.like(id, user, token, req)
   }
 
   @Public()

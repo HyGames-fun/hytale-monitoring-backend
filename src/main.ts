@@ -6,7 +6,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { apiReference } from '@scalar/nestjs-api-reference'
 import { JwtGuard } from './guards/auth.guard'
 import { GlobalFilter } from './filters/global.filter'
-import { ValidationError } from 'class-validator'
 import { ValidationException } from './exceptions/validation.exception'
 import { GlobalInterceptor } from './interceptors/global.interceptor'
 

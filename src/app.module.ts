@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config'
 import { PrismaModule } from './prisma/prisma.module'
 import { AuthModule } from './modules/auth/auth.module'
 import { UserModule } from './modules/user/user.module'
+import { TurnstileModule } from './modules/turnstile/turnstile.module'
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { UserModule } from './modules/user/user.module'
     ServerModule,
     PrismaModule,
     AuthModule,
-    UserModule
+    UserModule,
+    TurnstileModule
   ],
   controllers: [AppController],
   providers: [AppService]
