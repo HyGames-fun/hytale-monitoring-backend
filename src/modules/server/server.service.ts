@@ -142,7 +142,7 @@ export class ServerService {
     })
   }
 
-  async findPage(dto: FindPageDto, user: User | undefined) {
+  async findPage(dto: FindPageDto, req: Request, user?: User) {
     const { page, quantity, filters, order } = dto
 
     const servers = await this.prisma.server.findMany({
@@ -171,7 +171,9 @@ export class ServerService {
 
     servers.map((server) => ({
       ...server,
-      liked: server.likes.some((item) => item.userId === user?.id),
+      liked: user
+        ? server.likes.some((item) => item.userId === user.id)
+        : this.guestLikeCheck(req, server.id),
       isOnline: server.ip ? checkPort(server.ip) : undefined,
       players: 10
     }))
