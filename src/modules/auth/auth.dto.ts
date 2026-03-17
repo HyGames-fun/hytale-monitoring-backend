@@ -1,4 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
+import { IsTrim } from '../../decorators/trim.decorator'
 
 export class DiscordRegisterDto {
   name: string
@@ -7,9 +8,10 @@ export class DiscordRegisterDto {
 }
 
 export class RegisterDto {
+  @IsTrim()
   @IsString()
   @IsNotEmpty()
-  @MinLength(6)
+  @MinLength(3)
   name: string
 
   @IsString()
@@ -31,6 +33,5 @@ export class LoginDto {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(6)
   password: string
 }

@@ -5,7 +5,6 @@ import {
   IsEnum,
   IsIn,
   IsInt,
-  IsNotEmpty,
   IsOptional,
   IsString,
   Length,
@@ -15,7 +14,8 @@ import {
 import { IsDomain } from '../../decorators/domain.decorator'
 import { IsIp } from '../../decorators/ip.decorator'
 import { IsKebabCase } from '../../decorators/kebab-case.decorator'
-import { Transform, Type } from 'class-transformer'
+import { Type } from 'class-transformer'
+import { IsTrim } from '../../decorators/trim.decorator'
 
 export class ServerDto {
   id?: number
@@ -79,17 +79,17 @@ export class CreateServerDto {
   @IsDomain()
   domain: string
 
-  @Transform(({ value }) => value?.trim())
+  @IsTrim()
   @IsString()
   @Length(10, 300)
   description: string
 
-  @Transform(({ value }) => value?.trim())
+  @IsTrim()
   @IsString()
   @Length(2, 30)
   name: string
 
-  @Transform(({ value }) => value?.trim())
+  @IsTrim()
   @IsString()
   @Length(2, 30)
   @IsKebabCase()
