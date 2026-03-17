@@ -7,10 +7,14 @@ import { PrismaModule } from './prisma/prisma.module'
 import { AuthModule } from './modules/auth/auth.module'
 import { UserModule } from './modules/user/user.module'
 import { TurnstileModule } from './modules/turnstile/turnstile.module'
+import { CacheModule } from '@nestjs/cache-manager'
 
 @Module({
   imports: [
     ConfigModule.forRoot({
+      isGlobal: true
+    }),
+    CacheModule.register({
       isGlobal: true
     }),
     ServerModule,

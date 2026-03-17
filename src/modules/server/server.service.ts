@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   UnauthorizedException
 } from '@nestjs/common'
@@ -10,12 +11,15 @@ import { User } from '../../../generated/prisma/client'
 import { checkPort } from '../../validators/ip.validator'
 import { Request } from 'express'
 import { TurnstileService } from '../turnstile/turnstile.service'
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager'
+import ms from 'ms'
 
 @Injectable()
 export class ServerService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly turnstileService: TurnstileService
+    private readonly turnstileService: TurnstileService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
   async create(dto: CreateServerDto) {
@@ -39,13 +43,29 @@ export class ServerService {
     token: string | undefined,
     req: Request
   ) {
+    await this.checkServerId(id)
+
     if (!user) {
       await this.validateGuest(req, token)
-      return this.likeAsGuest(id)
+      const isLiked = await this.guestLikeCheck(req, id)
+      return this.likeAsGuest(id, isLiked)
     }
 
     const userWithLikes = await this.getUserLikes(user.id)
     return this.toggleLike(id, user.id, userWithLikes)
+  }
+
+  private async checkServerId(id: number) {
+    const server = await this.prisma.server.findUnique({
+      where: {
+        id
+      },
+      select: {
+        id: true
+      }
+    })
+
+    if (!server) throw new BadRequestException('Server not found')
   }
 
   private async validateGuest(req: Request, token?: string) {
@@ -60,12 +80,28 @@ export class ServerService {
     }
   }
 
+  private async guestLikeCheck(req: Request, id: number) {
+    const ip = req.ip || undefined
+
+    if (!ip) throw new BadRequestException('Guest IP not found')
+
+    const isLiked = await this.cacheManager.get(`guest_like:${ip}:${id}`)
+
+    if (isLiked) {
+      await this.cacheManager.del(`guest_like:${ip}:${id}`)
+      return true
+    }
+
+    await this.cacheManager.set(`guest_like:${ip}:${id}`, true, ms('1d'))
+    return false
+  }
+
   private async getUserLikes(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
-        likedServers: {
-          select: { id: true }
+        likes: {
+          select: { serverId: true }
         }
       }
     })
@@ -80,42 +116,30 @@ export class ServerService {
   private async toggleLike(
     serverId: number,
     userId: number,
-    user: { likedServers: { id: number }[] }
+    user: { likes: { serverId: number }[] }
   ) {
-    const isLiked = user.likedServers.some((s) => s.id === serverId)
+    const isLiked = user.likes.some((s) => s.serverId === serverId)
 
-    try {
-      await this.prisma.server.update({
+    await this.prisma.$transaction([
+      isLiked
+        ? this.prisma.like.delete({
+            where: { userId_serverId: { userId, serverId } }
+          })
+        : this.prisma.like.create({ data: { userId, serverId } }),
+      this.prisma.server.update({
         where: { id: serverId },
-        data: {
-          likedUsers: isLiked
-            ? { disconnect: { id: userId } }
-            : { connect: { id: userId } },
-          likes: isLiked ? { decrement: 1 } : { increment: 1 }
-        }
+        data: { likesQuantity: isLiked ? { decrement: 1 } : { increment: 1 } }
       })
-    } catch (e: any) {
-      if (e.code === 'P2025') {
-        throw new BadRequestException('Server not found')
-      }
-      throw e
-    }
+    ])
   }
 
-  private async likeAsGuest(serverId: number) {
-    try {
-      await this.prisma.server.update({
-        where: { id: serverId },
-        data: {
-          likes: { increment: 1 }
-        }
-      })
-    } catch (e: any) {
-      if (e.code === 'P2025') {
-        throw new BadRequestException('Server not found')
+  private async likeAsGuest(serverId: number, isLiked: boolean) {
+    await this.prisma.server.update({
+      where: { id: serverId },
+      data: {
+        likesQuantity: isLiked ? { decrement: 1 } : { increment: 1 }
       }
-      throw e
-    }
+    })
   }
 
   async findPage(dto: FindPageDto, user: User | undefined) {
@@ -133,13 +157,13 @@ export class ServerService {
         })
       },
       orderBy: [
-        ...(order?.likes ? [{ likes: order.likes }] : []),
+        ...(order?.likes ? [{ likesQuantity: order.likes }] : []),
         ...(order?.createdAt ? [{ createdAt: order.createdAt }] : [])
       ],
       include: {
-        likedUsers: {
+        likes: {
           select: {
-            id: true
+            userId: true
           }
         }
       }
@@ -147,7 +171,7 @@ export class ServerService {
 
     servers.map((server) => ({
       ...server,
-      liked: server.likedUsers.some((item) => item.id === user?.id),
+      liked: server.likes.some((item) => item.userId === user?.id),
       isOnline: server.ip ? checkPort(server.ip) : undefined,
       players: 10
     }))
