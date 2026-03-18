@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common'
 import { Validate } from 'class-validator'
-import { TrimValidator } from '../validators/trim.validator'
+import { IsTrimValidator } from '../validators/trim.validator'
 
 export function IsTrim() {
-  return applyDecorators(Validate(TrimValidator))
+  return applyDecorators(Validate(IsTrimValidator))
 }

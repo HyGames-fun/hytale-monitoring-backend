@@ -4,8 +4,8 @@ import {
   ValidatorConstraintInterface
 } from 'class-validator'
 
-@ValidatorConstraint({ name: 'TrimValidator', async: false })
-export class TrimValidator implements ValidatorConstraintInterface {
+@ValidatorConstraint({ name: 'IsTrimValidator', async: false })
+export class IsTrimValidator implements ValidatorConstraintInterface {
   validate(value: string): Promise<boolean> | boolean {
     return value.trim() === value
   }
