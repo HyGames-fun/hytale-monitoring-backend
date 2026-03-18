@@ -47,7 +47,7 @@ export class ServerService {
 
     if (!user) {
       await this.validateGuest(req, token)
-      const isLiked = await this.guestLikeCheck(req, id)
+      const isLiked = await this.guestLikeCheck(req, id, true)
       return this.likeAsGuest(id, isLiked)
     }
 
@@ -80,20 +80,24 @@ export class ServerService {
     }
   }
 
-  private async guestLikeCheck(req: Request, id: number) {
+  private async guestLikeCheck(req: Request, id: number, change: boolean) {
     const ip = req.ip || undefined
 
     if (!ip) throw new BadRequestException('Guest IP not found')
 
-    const isLiked = await this.cacheManager.get(`guest_like:${ip}:${id}`)
+    const isLiked: boolean | undefined = await this.cacheManager.get(
+      `guest_like:${ip}:${id}`
+    )
 
-    if (isLiked) {
-      await this.cacheManager.del(`guest_like:${ip}:${id}`)
-      return true
+    if (change) {
+      if (!isLiked) {
+        await this.cacheManager.set(`guest_like:${ip}:${id}`, true, ms('1d'))
+      } else {
+        await this.cacheManager.del(`guest_like:${ip}:${id}`)
+      }
     }
 
-    await this.cacheManager.set(`guest_like:${ip}:${id}`, true, ms('1d'))
-    return false
+    return isLiked
   }
 
   private async getUserLikes(userId: number) {
@@ -133,7 +137,7 @@ export class ServerService {
     ])
   }
 
-  private async likeAsGuest(serverId: number, isLiked: boolean) {
+  private async likeAsGuest(serverId: number, isLiked?: boolean) {
     await this.prisma.server.update({
       where: { id: serverId },
       data: {
@@ -173,7 +177,7 @@ export class ServerService {
       ...server,
       liked: user
         ? server.likes.some((item) => item.userId === user.id)
-        : this.guestLikeCheck(req, server.id),
+        : this.guestLikeCheck(req, server.id, false),
       isOnline: server.ip ? checkPort(server.ip) : undefined,
       players: 10
     }))
