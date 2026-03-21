@@ -6,6 +6,6 @@ export class AppService {
   constructor(private readonly prisma: PrismaService) {}
 
   healthCheck() {
-    void this.prisma.$executeRaw`SELECT 1`
+    return this.prisma.$queryRaw`SELECT 1`
   }
 }
