@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common'
 import { ServerService } from './server.service'
 import { CreateServerDto, FindPageDto } from './server.dto'
-import { ApiBearerAuth } from '@nestjs/swagger'
 import { Authorized } from '../../decorators/autrorized.decorator'
 import type { User } from '../../../generated/prisma/client'
 import { Public } from '../../decorators/public.decorator'
@@ -21,7 +20,7 @@ import type { Request } from 'express'
 export class ServerController {
   constructor(private readonly serverService: ServerService) {}
 
-  @ApiBearerAuth()
+  @Public()
   @Post('create')
   create(@Body() dto: CreateServerDto) {
     return this.serverService.create(dto)

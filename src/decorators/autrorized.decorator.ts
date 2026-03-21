@@ -6,5 +6,5 @@ export const Authorized = createParamDecorator((data: keyof User, context) => {
   const request: Request = context.switchToHttp().getRequest()
   const user = request.user
 
-  return user ? (data ? user[data] : user) : undefined
+  return data ? user?.[data] : user
 })

@@ -66,6 +66,8 @@ export class ServerService {
     })
 
     if (!server) throw new BadRequestException('Server not found')
+
+    return {}
   }
 
   private async validateGuest(req: Request, token?: string) {

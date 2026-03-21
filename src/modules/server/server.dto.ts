@@ -79,19 +79,19 @@ export class CreateServerDto {
   @IsDomain()
   domain: string
 
-  @IsTrim()
   @IsString()
   @Length(10, 300)
+  @IsTrim()
   description: string
 
-  @IsTrim()
   @IsString()
   @Length(2, 30)
+  @IsTrim()
   name: string
 
-  @IsTrim()
   @IsString()
   @Length(2, 30)
+  @IsTrim()
   @IsKebabCase()
   nameId: string
 
