@@ -99,7 +99,7 @@ export class ServerService {
       }
     }
 
-    return isLiked
+    return isLiked ?? false
   }
 
   private async getUserLikes(userId: number) {
@@ -172,17 +172,51 @@ export class ServerService {
             userId: true
           }
         }
+      },
+      omit: {
+        createdAt: true,
+        updatedAt: true
       }
     })
 
-    servers.map((server) => ({
-      ...server,
-      liked: user
-        ? server.likes.some((item) => item.userId === user.id)
-        : this.guestLikeCheck(req, server.id, false),
-      isOnline: server.ip ? checkPort(server.ip) : undefined,
-      players: 10
-    }))
+    const serverIds = servers.map((s) => s.id)
+
+    let likedSet: Set<number>
+
+    if (user) {
+      const likes = await this.prisma.like.findMany({
+        where: {
+          serverId: { in: serverIds },
+          userId: user.id
+        },
+        select: {
+          serverId: true
+        }
+      })
+
+      likedSet = new Set(likes.map((l) => l.serverId))
+    }
+
+    return Promise.all(
+      servers.map(async (server) => {
+        let liked: boolean
+
+        if (user) {
+          liked = likedSet.has(server.id)
+        } else {
+          liked = await this.guestLikeCheck(req, server.id, false)
+        }
+
+        return {
+          ...server,
+          id: undefined,
+          likes: undefined,
+          liked,
+          isOnline: server.ip ? await checkPort(server.ip) : null,
+          players: 10
+        }
+      })
+    )
   }
 
   findOne(id: number) {

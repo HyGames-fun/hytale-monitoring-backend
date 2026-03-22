@@ -5,8 +5,10 @@ import {
   IsEnum,
   IsIn,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
+  IsUrl,
   Length,
   Min,
   ValidateNested
@@ -24,6 +26,7 @@ export class ServerDto {
   nameId?: string
   description?: string
   name?: string
+  poster?: string
   tags?: Tag[]
   region?: Region
 }
@@ -75,6 +78,7 @@ export class CreateServerDto {
   @IsIp()
   ip?: string
 
+  @IsNotEmpty()
   @IsString()
   @IsDomain()
   domain: string
@@ -94,6 +98,11 @@ export class CreateServerDto {
   @IsTrim()
   @IsKebabCase()
   nameId: string
+
+  @IsOptional()
+  @IsString()
+  @IsUrl()
+  poster: string
 
   @IsArray()
   @ArrayNotEmpty()
