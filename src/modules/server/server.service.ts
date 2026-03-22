@@ -209,7 +209,7 @@ export class ServerService {
 
         return {
           ...server,
-          id: undefined,
+          userId: undefined,
           likes: undefined,
           liked,
           isOnline: server.ip ? await checkPort(server.ip) : null,
