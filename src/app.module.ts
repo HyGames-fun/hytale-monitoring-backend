@@ -8,7 +8,8 @@ import { AuthModule } from './modules/auth/auth.module'
 import { UserModule } from './modules/user/user.module'
 import { TurnstileModule } from './modules/turnstile/turnstile.module'
 import { CacheModule } from '@nestjs/cache-manager'
-import { ThrottlerModule } from '@nestjs/throttler'
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import { APP_GUARD } from '@nestjs/core'
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { ThrottlerModule } from '@nestjs/throttler'
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          ttl: 60000,
+          ttl: 10000,
           limit: 10
         }
       ]
@@ -33,6 +34,12 @@ import { ThrottlerModule } from '@nestjs/throttler'
     TurnstileModule
   ],
   controllers: [AppController],
-  providers: [AppService]
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard
+    }
+  ]
 })
 export class AppModule {}
