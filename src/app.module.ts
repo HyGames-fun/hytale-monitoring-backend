@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module'
 import { UserModule } from './modules/user/user.module'
 import { TurnstileModule } from './modules/turnstile/turnstile.module'
 import { CacheModule } from '@nestjs/cache-manager'
+import { ThrottlerModule } from '@nestjs/throttler'
 
 @Module({
   imports: [
@@ -16,6 +17,14 @@ import { CacheModule } from '@nestjs/cache-manager'
     }),
     CacheModule.register({
       isGlobal: true
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 10
+        }
+      ]
     }),
     ServerModule,
     PrismaModule,
