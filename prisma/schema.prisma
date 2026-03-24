@@ -26,7 +26,7 @@ model User {
 
 model Server {
   id            Int     @id @default(autoincrement())
-  domain        String  @unique
+  domain        String? @unique
   ip            String? @unique @map("real_ip")
   description   String
   name          String

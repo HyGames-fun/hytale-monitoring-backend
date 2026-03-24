@@ -5,19 +5,20 @@ import {
   IsEnum,
   IsIn,
   IsInt,
-  IsNotEmpty,
   IsOptional,
   IsString,
   IsUrl,
   Length,
-  Min,
-  ValidateNested
+  Min, Validate,
+  ValidateNested,
 } from 'class-validator'
 import { IsDomain } from '../../decorators/domain.decorator'
 import { IsIp } from '../../decorators/ip.decorator'
 import { IsKebabCase } from '../../decorators/kebab-case.decorator'
 import { Type } from 'class-transformer'
 import { IsTrim } from '../../decorators/trim.decorator'
+import { AtLeastOne } from '../../decorators/at-least-one.decorator'
+import { IsLatin } from '../../decorators/latin.decorator'
 
 export class ServerDto {
   id?: number
@@ -78,10 +79,13 @@ export class CreateServerDto {
   @IsIp()
   ip?: string
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @IsDomain()
-  domain: string
+  domain?: string
+
+  @AtLeastOne(['ip', 'domain'])
+  private readonly _atLeastOne!: never
 
   @IsString()
   @Length(10, 300)
@@ -97,6 +101,7 @@ export class CreateServerDto {
   @Length(2, 30)
   @IsTrim()
   @IsKebabCase()
+  @IsLatin()
   nameId: string
 
   @IsOptional()

@@ -13,6 +13,7 @@ import { Request } from 'express'
 import { TurnstileService } from '../turnstile/turnstile.service'
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager'
 import ms from 'ms'
+import { map } from 'rxjs'
 
 @Injectable()
 export class ServerService {
@@ -167,60 +168,113 @@ export class ServerService {
         ...(order?.createdAt ? [{ createdAt: order.createdAt }] : [])
       ],
       include: {
-        likes: {
-          select: {
-            userId: true
-          }
-        }
+        likes: user ? {
+          where: { userId: user.id },
+          select: { serverId: true }
+        } : false
       },
       omit: {
+        region: true,
+        userId: true,
         createdAt: true,
         updatedAt: true
       }
     })
-
-    const serverIds = servers.map((s) => s.id)
-
-    let likedSet: Set<number>
-
-    if (user) {
-      const likes = await this.prisma.like.findMany({
-        where: {
-          serverId: { in: serverIds },
-          userId: user.id
-        },
-        select: {
-          serverId: true
-        }
-      })
-
-      likedSet = new Set(likes.map((l) => l.serverId))
-    }
 
     return Promise.all(
       servers.map(async (server) => {
         let liked: boolean
 
         if (user) {
-          liked = likedSet.has(server.id)
+          liked = server.likes?.length > 0
         } else {
           liked = await this.guestLikeCheck(req, server.id, false)
         }
 
         return {
           ...server,
-          userId: undefined,
           likes: undefined,
           liked,
-          isOnline: server.ip ? await checkPort(server.ip) : null,
           players: 10
         }
       })
     )
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} server`
+  async getOnlineStatus(serverId: number) {
+    const server = await this.prisma.server.findUnique({
+      where: {
+        id: serverId
+      },
+      select: {
+        id: true,
+        ip: true
+      }
+    })
+
+    if (!server) throw new BadRequestException('Server not found')
+
+    return {
+      id: server.id,
+      isOnline: server.ip ? await checkPort(server.ip) : null
+    }
+  }
+
+  async getOnlineStatuses(serverIds: number[]) {
+    const servers = await this.prisma.server.findMany({
+      where: {
+        id: { in: serverIds }
+      },
+      select: {
+        id: true,
+        ip: true
+      }
+    })
+
+    if (!servers.length) throw new BadRequestException('Servers not found')
+
+    return Promise.all(
+      servers.map(async server => ({
+        id: server.id,
+        isOnline: server.ip ? await checkPort(server.ip) : null
+      }))
+    )
+  }
+
+  async findOne(nameId: string, user: User | undefined, req: Request) {
+    const server = await this.prisma.server.findUnique({
+      where: { nameId },
+      include: {
+        likes: user ? {
+          where: { userId: user.id },
+          select: { serverId: true }
+        } : false
+      },
+      omit: {
+        userId: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
+
+    console.log(server)
+
+    if (!server) throw new BadRequestException('Server not found')
+
+    let liked: boolean
+
+    if (user) {
+      liked = server.likes?.length > 0
+    } else {
+      liked = await this.guestLikeCheck(req, server.id, false)
+    }
+
+    return {
+      ...server,
+      likes: undefined,
+      liked,
+      players: 10
+    }
   }
 
   async findQuantity() {

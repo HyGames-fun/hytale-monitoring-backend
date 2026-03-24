@@ -7,7 +7,7 @@ import {
   Delete,
   Query,
   ParseIntPipe,
-  Req
+  Req, ParseArrayPipe,
 } from '@nestjs/common'
 import { ServerService } from './server.service'
 import { CreateServerDto, FindPageDto } from './server.dto'
@@ -15,6 +15,7 @@ import { Authorized } from '../../decorators/autrorized.decorator'
 import type { User } from '../../../generated/prisma/client'
 import { Public } from '../../decorators/public.decorator'
 import type { Request } from 'express'
+import { Type } from 'class-transformer'
 
 @Controller('server')
 export class ServerController {
@@ -53,9 +54,30 @@ export class ServerController {
     return this.serverService.findQuantity()
   }
 
-  @Get('id/:id')
-  findOne(@Param('id') id: string) {
-    return this.serverService.findOne(+id)
+  @Public()
+  @Get('statuses')
+  getStatuses(
+    @Query('ids', new ParseArrayPipe({ items: Number })) ids: number[]
+  ) {
+    return this.serverService.getOnlineStatuses(ids)
+  }
+
+  @Public()
+  @Get('statuses')
+  getStatus(
+    @Query('id', ParseIntPipe) id: number
+  ) {
+    return this.serverService.getOnlineStatus(id)
+  }
+
+  @Public()
+  @Get('id/:nameId')
+  findOne(
+    @Param('nameId') nameId: string,
+    @Req() req: Request,
+    @Authorized() user?: User
+  ) {
+    return this.serverService.findOne(nameId, user, req)
   }
 
   @Delete('id/:id')
