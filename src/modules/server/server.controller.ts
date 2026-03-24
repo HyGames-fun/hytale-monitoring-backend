@@ -7,7 +7,8 @@ import {
   Delete,
   Query,
   ParseIntPipe,
-  Req, ParseArrayPipe,
+  Req,
+  ParseArrayPipe
 } from '@nestjs/common'
 import { ServerService } from './server.service'
 import { CreateServerDto, FindPageDto } from './server.dto'
@@ -15,7 +16,6 @@ import { Authorized } from '../../decorators/autrorized.decorator'
 import type { User } from '../../../generated/prisma/client'
 import { Public } from '../../decorators/public.decorator'
 import type { Request } from 'express'
-import { Type } from 'class-transformer'
 
 @Controller('server')
 export class ServerController {
@@ -64,9 +64,7 @@ export class ServerController {
 
   @Public()
   @Get('status')
-  getStatus(
-    @Query('id', ParseIntPipe) id: number
-  ) {
+  getStatus(@Query('id', ParseIntPipe) id: number) {
     return this.serverService.getOnlineStatus(id)
   }
 

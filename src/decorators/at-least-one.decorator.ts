@@ -3,7 +3,7 @@ import { AtLeastOneValidator } from '../validators/at-least-one.validator'
 
 export function AtLeastOne(
   properties: string[],
-  validationOptions?: ValidationOptions,
+  validationOptions?: ValidationOptions
 ) {
   return function (object: object, propertyName: string) {
     registerDecorator({
@@ -11,7 +11,7 @@ export function AtLeastOne(
       propertyName,
       options: validationOptions,
       constraints: properties,
-      validator: AtLeastOneValidator,
+      validator: AtLeastOneValidator
     })
   }
 }

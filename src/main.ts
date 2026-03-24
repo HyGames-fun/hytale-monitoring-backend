@@ -8,7 +8,6 @@ import { JwtGuard } from './guards/auth.guard'
 import { GlobalFilter } from './filters/global.filter'
 import { ValidationException } from './exceptions/validation.exception'
 import { GlobalInterceptor } from './interceptors/global.interceptor'
-import { ThrottlerGuard, ThrottlerStorage } from '@nestjs/throttler'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -51,7 +50,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(',') || '*',
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true
   })
 

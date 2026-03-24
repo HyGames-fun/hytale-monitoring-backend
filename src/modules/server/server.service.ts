@@ -13,7 +13,6 @@ import { Request } from 'express'
 import { TurnstileService } from '../turnstile/turnstile.service'
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager'
 import ms from 'ms'
-import { map } from 'rxjs'
 
 @Injectable()
 export class ServerService {
@@ -168,10 +167,12 @@ export class ServerService {
         ...(order?.createdAt ? [{ createdAt: order.createdAt }] : [])
       ],
       include: {
-        likes: user ? {
-          where: { userId: user.id },
-          select: { serverId: true }
-        } : false
+        likes: user
+          ? {
+              where: { userId: user.id },
+              select: { serverId: true }
+            }
+          : false
       },
       omit: {
         region: true,
@@ -234,7 +235,7 @@ export class ServerService {
     if (!servers.length) throw new BadRequestException('Servers not found')
 
     return Promise.all(
-      servers.map(async server => ({
+      servers.map(async (server) => ({
         id: server.id,
         isOnline: server.ip ? await checkPort(server.ip) : null
       }))
@@ -245,10 +246,12 @@ export class ServerService {
     const server = await this.prisma.server.findUnique({
       where: { nameId },
       include: {
-        likes: user ? {
-          where: { userId: user.id },
-          select: { serverId: true }
-        } : false
+        likes: user
+          ? {
+              where: { userId: user.id },
+              select: { serverId: true }
+            }
+          : false
       },
       omit: {
         userId: true,

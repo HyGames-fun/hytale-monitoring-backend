@@ -1,4 +1,8 @@
-import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator'
+import {
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface
+} from 'class-validator'
 
 @ValidatorConstraint({ async: false })
 export class AtLeastOneValidator implements ValidatorConstraintInterface {
@@ -8,7 +12,11 @@ export class AtLeastOneValidator implements ValidatorConstraintInterface {
 
     return properties.some((prop) => {
       const value = obj[prop]
-      return value !== null && value !== undefined && (typeof value !== 'string' || value.trim() !== '')
+      return (
+        value !== null &&
+        value !== undefined &&
+        (typeof value !== 'string' || value.trim() !== '')
+      )
     })
   }
 

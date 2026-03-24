@@ -1,4 +1,8 @@
-import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator'
+import {
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface
+} from 'class-validator'
 
 ValidatorConstraint({ name: 'IsLatin', async: false })
 export class IsLatinValidator implements ValidatorConstraintInterface {
@@ -9,5 +13,4 @@ export class IsLatinValidator implements ValidatorConstraintInterface {
   defaultMessage(args?: ValidationArguments): string {
     return `${args?.property} must be only latin`
   }
-
 }
