@@ -57,6 +57,7 @@ model Like {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@id([userId, serverId])
+  @@map("like")
 }
 
 enum Region {
