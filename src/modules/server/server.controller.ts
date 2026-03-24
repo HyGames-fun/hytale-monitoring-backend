@@ -63,7 +63,7 @@ export class ServerController {
   }
 
   @Public()
-  @Get('statuses')
+  @Get('status')
   getStatus(
     @Query('id', ParseIntPipe) id: number
   ) {
