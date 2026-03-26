@@ -80,11 +80,15 @@ export class SearchService implements OnModuleInit {
     }
   }
 
-  async searchServers(query: string) {
+  async searchServers(query: string, page: number, limit: number) {
     if (!query) throw new BadRequestException('Query is empty')
+
+    const from = page * limit
 
     const result = await this.elasticsearchService.search({
       index: 'servers',
+      from,
+      size: limit,
       query: {
         bool: {
           should: [
@@ -105,6 +109,9 @@ export class SearchService implements OnModuleInit {
       }
     })
 
-    return result.hits.hits.map((hit) => hit._source)
+    return result.hits.hits.map((hit) => ({
+      id: +hit._id!,
+      ...hit._source as object
+    }))
   }
 }

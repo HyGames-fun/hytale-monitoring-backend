@@ -13,7 +13,7 @@ import {
   UpdateServerDto
 } from './server.dto'
 import { PrismaService } from '../../prisma/prisma.service'
-import { User } from '../../../generated/prisma/client'
+import { Tag, User } from '../../../generated/prisma/client'
 import { checkPort } from '../../validators/ip.validator'
 import { Request } from 'express'
 import { TurnstileService } from '../turnstile/turnstile.service'
@@ -303,6 +303,78 @@ export class ServerService {
 
   async findQuantity() {
     return this.prisma.server.count()
+  }
+
+  async search(q: string, page: number, limit: number) {
+    if (!q) throw new BadRequestException('Query is undefined')
+
+    const normalized = q.trim().toLowerCase()
+
+    if (!normalized) throw new BadRequestException('Query is empty')
+
+    if (limit < 1) throw new BadRequestException('Limit is less than 1')
+    if (limit > 50) throw new BadRequestException('Limit is more than 50')
+
+    if (page < 0) throw new BadRequestException('Limit is less than 0')
+
+    if (this.SEARCH_METHOD === 'elasticsearch') {
+      const search = await this.searchService.searchServers(q, page, limit)
+      const ids = search.map(s => s.id)
+
+      return this.prisma.server.findMany({
+        where: {
+          id: { in: ids }
+        }
+      })
+    }
+
+    const TAG_VALUES = Object.values(Tag)
+
+    const words = [...new Set(
+      normalized.split(/\s+/).filter(Boolean)
+    )]
+
+    if (words.length === 0) {
+      throw new BadRequestException('Query is empty')
+    }
+
+    return this.prisma.server.findMany({
+      skip: page * limit,
+      take: limit,
+      where: {
+        AND: words.map((word) => {
+          const tagCandidate = word.toUpperCase()
+
+          const isTag = TAG_VALUES.includes(tagCandidate as Tag)
+
+          return {
+            OR: [
+              {
+                name: {
+                  contains: word,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                description: {
+                  contains: word,
+                  mode: 'insensitive',
+                },
+              },
+              ...(isTag
+                ? [
+                  {
+                    tags: {
+                      has: tagCandidate as Tag,
+                    },
+                  },
+                ]
+                : []),
+            ],
+          }
+        }),
+      },
+    })
   }
 
   async update(id: number, dto: UpdateServerDto) {

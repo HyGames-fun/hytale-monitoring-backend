@@ -70,6 +70,16 @@ export class ServerController {
   }
 
   @Public()
+  @Get('search')
+  search(
+    @Query('query') q: string,
+    @Query('page', ParseIntPipe) page: number,
+    @Query('limit', ParseIntPipe) limit: number
+  ) {
+    return this.serverService.search(q, page, limit)
+  }
+
+  @Public()
   @Get('id/:nameId')
   findOne(
     @Param('nameId') nameId: string,

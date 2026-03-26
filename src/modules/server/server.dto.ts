@@ -8,9 +8,9 @@ import {
   IsOptional,
   IsString,
   IsUrl,
-  Length,
+  Length, Max,
   Min,
-  ValidateNested
+  ValidateNested,
 } from 'class-validator'
 import { IsDomain } from '../../decorators/domain.decorator'
 import { IsIp } from '../../decorators/ip.decorator'
@@ -18,7 +18,6 @@ import { IsKebabCase } from '../../decorators/kebab-case.decorator'
 import { Type } from 'class-transformer'
 import { IsTrim } from '../../decorators/trim.decorator'
 import { AtLeastOne } from '../../decorators/at-least-one.decorator'
-import { IsLatin } from '../../decorators/latin.decorator'
 
 export class ServerDto {
   id?: number
@@ -64,6 +63,7 @@ export class FindPageDto {
 
   @IsInt()
   @Min(1)
+  @Max(50)
   quantity: number
 
   @IsOptional()
