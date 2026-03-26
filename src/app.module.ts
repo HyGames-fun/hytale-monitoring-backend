@@ -10,6 +10,7 @@ import { TurnstileModule } from './modules/turnstile/turnstile.module'
 import { CacheModule } from '@nestjs/cache-manager'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { APP_GUARD } from '@nestjs/core'
+import { SearchModule } from './modules/search/search.module'
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { APP_GUARD } from '@nestjs/core'
     PrismaModule,
     AuthModule,
     UserModule,
-    TurnstileModule
+    TurnstileModule,
+    SearchModule
   ],
   controllers: [AppController],
   providers: [

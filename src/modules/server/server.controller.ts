@@ -8,10 +8,11 @@ import {
   Query,
   ParseIntPipe,
   Req,
-  ParseArrayPipe
+  ParseArrayPipe,
+  Patch
 } from '@nestjs/common'
 import { ServerService } from './server.service'
-import { CreateServerDto, FindPageDto } from './server.dto'
+import { CreateServerDto, FindPageDto, UpdateServerDto } from './server.dto'
 import { Authorized } from '../../decorators/autrorized.decorator'
 import type { User } from '../../../generated/prisma/client'
 import { Public } from '../../decorators/public.decorator'
@@ -78,8 +79,15 @@ export class ServerController {
     return this.serverService.findOne(nameId, user, req)
   }
 
+  @Public()
+  @Patch('id/:id')
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateServerDto) {
+    return this.serverService.update(id, dto)
+  }
+
+  @Public()
   @Delete('id/:id')
-  remove(@Param('id') id: string) {
-    return this.serverService.remove(+id)
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.serverService.remove(id)
   }
 }

@@ -3,9 +3,15 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  NotFoundException,
   UnauthorizedException
 } from '@nestjs/common'
-import { CreateServerDto, FindPageDto } from './server.dto'
+import {
+  CreateServerDto,
+  FindPageDto,
+  ServerDto,
+  UpdateServerDto
+} from './server.dto'
 import { PrismaService } from '../../prisma/prisma.service'
 import { User } from '../../../generated/prisma/client'
 import { checkPort } from '../../validators/ip.validator'
@@ -13,18 +19,27 @@ import { Request } from 'express'
 import { TurnstileService } from '../turnstile/turnstile.service'
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager'
 import ms from 'ms'
+import { SearchService } from '../search/search.service'
+import { ConfigService } from '@nestjs/config'
 
 @Injectable()
 export class ServerService {
+  private readonly SEARCH_METHOD: string
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly turnstileService: TurnstileService,
+    private readonly searchService: SearchService,
+    private readonly configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache
-  ) {}
+  ) {
+    this.SEARCH_METHOD = configService.getOrThrow('SEARCH_METHOD')
+  }
 
   async create(dto: CreateServerDto) {
+    let server: ServerDto
     try {
-      return await this.prisma.server.create({
+      server = await this.prisma.server.create({
         data: dto
       })
     } catch (e) {
@@ -35,6 +50,12 @@ export class ServerService {
       }
       throw e
     }
+
+    if (this.SEARCH_METHOD === 'elasticsearch') {
+      await this.searchService.indexServer(server)
+    }
+
+    return server
   }
 
   async like(
@@ -284,7 +305,44 @@ export class ServerService {
     return this.prisma.server.count()
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} server`
+  async update(id: number, dto: UpdateServerDto) {
+    let server: ServerDto
+    try {
+      server = await this.prisma.server.update({
+        where: { id },
+        data: dto
+      })
+    } catch (e) {
+      if (e.code === 'P2025') {
+        throw new NotFoundException('Server not found')
+      }
+      throw e
+    }
+
+    if (this.SEARCH_METHOD === 'elasticsearch') {
+      await this.searchService.indexServer(server)
+    }
+
+    return server
+  }
+
+  async remove(id: number) {
+    let server: ServerDto
+    try {
+      server = await this.prisma.server.delete({
+        where: { id }
+      })
+    } catch (e) {
+      if (e.code === 'P2025') {
+        throw new NotFoundException('Server not found')
+      }
+      throw e
+    }
+
+    if (this.SEARCH_METHOD === 'elasticsearch') {
+      await this.searchService.deleteServer(id)
+    }
+
+    return server
   }
 }

@@ -10,7 +10,6 @@ import {
   IsUrl,
   Length,
   Min,
-  Validate,
   ValidateNested
 } from 'class-validator'
 import { IsDomain } from '../../decorators/domain.decorator'
@@ -23,14 +22,18 @@ import { IsLatin } from '../../decorators/latin.decorator'
 
 export class ServerDto {
   id?: number
-  ip?: string
-  domain?: string
+  ip?: string | null
+  domain?: string | null
   nameId?: string
   description?: string
   name?: string
-  poster?: string
+  poster?: string | null
   tags?: Tag[]
   region?: Region
+  userId?: number | null
+  likesQuantity?: number
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 class FiltersDto {
@@ -102,13 +105,12 @@ export class CreateServerDto {
   @Length(2, 30)
   @IsTrim()
   @IsKebabCase()
-  @IsLatin()
   nameId: string
 
   @IsOptional()
   @IsString()
   @IsUrl()
-  poster: string
+  poster?: string
 
   @IsArray()
   @ArrayNotEmpty()
@@ -117,4 +119,49 @@ export class CreateServerDto {
 
   @IsEnum(Region)
   region: Region
+}
+
+export class UpdateServerDto {
+  @IsOptional()
+  @IsString()
+  @IsIp()
+  ip?: string
+
+  @IsOptional()
+  @IsString()
+  @IsDomain()
+  domain?: string
+
+  @IsOptional()
+  @IsString()
+  @Length(10, 300)
+  @IsTrim()
+  description?: string
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 30)
+  @IsTrim()
+  name?: string
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 30)
+  @IsTrim()
+  @IsKebabCase()
+  nameId?: string
+
+  @IsOptional()
+  @IsString()
+  @IsUrl()
+  poster?: string
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(Tag, { each: true })
+  tags?: Tag[]
+
+  @IsOptional()
+  @IsEnum(Region)
+  region?: Region
 }
