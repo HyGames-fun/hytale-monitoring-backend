@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common'
+import { Controller, Get, ParseIntPipe, Query } from '@nestjs/common'
 import { SearchService } from './search.service'
 import { Public } from '../../decorators/public.decorator'
 
@@ -8,7 +8,11 @@ export class SearchController {
 
   @Public()
   @Get()
-  search(@Query('q') q: string) {
-    return this.searchService.searchServers(q)
+  search(
+    @Query('query') q: string,
+    @Query('page', ParseIntPipe) page: number,
+    @Query('limit', ParseIntPipe) limit: number
+  ) {
+    return this.searchService.searchServers(q, page, limit)
   }
 }
