@@ -319,7 +319,7 @@ export class ServerService {
 
     if (this.SEARCH_METHOD === 'elasticsearch') {
       const search = await this.searchService.searchServers(q, page, limit)
-      const ids = search.map(s => s.id)
+      const ids = search.map((s) => s.id)
 
       return this.prisma.server.findMany({
         where: {
@@ -330,9 +330,7 @@ export class ServerService {
 
     const TAG_VALUES = Object.values(Tag)
 
-    const words = [...new Set(
-      normalized.split(/\s+/).filter(Boolean)
-    )]
+    const words = [...new Set(normalized.split(/\s+/).filter(Boolean))]
 
     if (words.length === 0) {
       throw new BadRequestException('Query is empty')
@@ -352,28 +350,28 @@ export class ServerService {
               {
                 name: {
                   contains: word,
-                  mode: 'insensitive',
-                },
+                  mode: 'insensitive'
+                }
               },
               {
                 description: {
                   contains: word,
-                  mode: 'insensitive',
-                },
+                  mode: 'insensitive'
+                }
               },
               ...(isTag
                 ? [
-                  {
-                    tags: {
-                      has: tagCandidate as Tag,
-                    },
-                  },
-                ]
-                : []),
-            ],
+                    {
+                      tags: {
+                        has: tagCandidate as Tag
+                      }
+                    }
+                  ]
+                : [])
+            ]
           }
-        }),
-      },
+        })
+      }
     })
   }
 

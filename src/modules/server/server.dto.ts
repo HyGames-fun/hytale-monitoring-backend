@@ -8,9 +8,10 @@ import {
   IsOptional,
   IsString,
   IsUrl,
-  Length, Max,
+  Length,
+  Max,
   Min,
-  ValidateNested,
+  ValidateNested
 } from 'class-validator'
 import { IsDomain } from '../../decorators/domain.decorator'
 import { IsIp } from '../../decorators/ip.decorator'

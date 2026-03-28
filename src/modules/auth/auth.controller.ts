@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpStatus,
+  ParseIntPipe,
   Post,
   Query,
   Redirect,
@@ -23,9 +24,16 @@ export class AuthController {
   @Post('register')
   register(
     @Res({ passthrough: true }) res: Response,
+    @Query('code', ParseIntPipe) code: number,
     @Body() dto: RegisterDto
   ) {
-    return this.authService.register(res, dto)
+    return this.authService.register(res, dto, code)
+  }
+
+  @Public()
+  @Post('init-register')
+  async initRegister(@Body() dto: RegisterDto) {
+    await this.authService.sendVerificationEmail(dto)
   }
 
   @Public()

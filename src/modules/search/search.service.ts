@@ -111,7 +111,7 @@ export class SearchService implements OnModuleInit {
 
     return result.hits.hits.map((hit) => ({
       id: +hit._id!,
-      ...hit._source as object
+      ...(hit._source as object)
     }))
   }
 }

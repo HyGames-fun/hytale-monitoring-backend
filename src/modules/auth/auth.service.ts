@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  HttpStatus,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException
@@ -17,7 +19,11 @@ import { User } from '../../../generated/prisma/client'
 import { UserDto } from '../user/user.dto'
 import { HttpService } from '@nestjs/axios'
 import { catchError, firstValueFrom } from 'rxjs'
-import { AxiosError } from 'axios'
+import * as nodemailer from 'nodemailer'
+import { MailOptions } from 'nodemailer/lib/smtp-pool'
+import { Transporter } from 'nodemailer'
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager'
+import { randomInt } from 'crypto'
 
 @Injectable()
 export class AuthService {
@@ -27,12 +33,20 @@ export class AuthService {
   private readonly DISCORD_CLIENT_ID: string
   private readonly DISCORD_CLIENT_SECRET: string
   private readonly DISCORD_REDIRECT_URI: string
+  private readonly SMTP_HOST: string
+  private readonly SMTP_USER: string
+  private readonly SMTP_PASSWORD: string
+  private readonly SMTP_VERIFICATION_TTL: StringValue
+  private readonly SMTP_VERIFICATION_RESEND_DELAY: StringValue
+
+  private transporter: Transporter
 
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly httpService: HttpService
+    private readonly httpService: HttpService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache
   ) {
     this.JWT_ACCESS_TOKEN_TTL = this.configService.getOrThrow(
       'JWT_ACCESS_TOKEN_TTL'
@@ -48,6 +62,56 @@ export class AuthService {
     this.DISCORD_REDIRECT_URI = this.configService.getOrThrow(
       'DISCORD_REDIRECT_URI'
     )
+    this.SMTP_HOST = this.configService.getOrThrow('SMTP_HOST')
+    this.SMTP_USER = this.configService.getOrThrow('SMTP_USER')
+    this.SMTP_PASSWORD = this.configService.getOrThrow('SMTP_PASSWORD')
+    this.SMTP_VERIFICATION_TTL = this.configService.getOrThrow(
+      'SMTP_VERIFICATION_TTL'
+    )
+    this.SMTP_VERIFICATION_RESEND_DELAY = this.configService.getOrThrow(
+      'SMTP_VERIFICATION_RESEND_DELAY'
+    )
+
+    this.transporter = nodemailer.createTransport({
+      host: this.SMTP_HOST,
+      port: 465,
+      secure: true,
+      auth: {
+        user: this.SMTP_USER,
+        pass: this.SMTP_PASSWORD
+      }
+    })
+  }
+
+  async sendVerificationEmail(dto: RegisterDto) {
+    const code = randomInt(100000, 1000000).toString()
+    const ttl = await this.cacheManager.ttl(dto.email)
+
+    if (ttl) {
+      const ttlMs = ttl - Date.now()
+      const resendAfter =
+        ms(this.SMTP_VERIFICATION_TTL) - ms(this.SMTP_VERIFICATION_RESEND_DELAY)
+
+      if (ttlMs > resendAfter) throw new BadRequestException('Can not resend')
+    }
+
+    await this.cacheManager.set(dto.email, code, ms('5m'))
+
+    const mail: MailOptions = {
+      from: {
+        name: 'HyGames.fun',
+        address: 'hygames.dev@gmail.com'
+      },
+      to: [dto.email],
+      subject: 'Verification code',
+      html: `<b>${code}</b>`
+    }
+
+    try {
+      await this.transporter.sendMail(mail)
+    } catch {
+      throw new BadRequestException()
+    }
   }
 
   async login(res: Response, dto: LoginDto) {
@@ -61,7 +125,13 @@ export class AuthService {
     return this.auth(res, payload)
   }
 
-  async register(res: Response, dto: RegisterDto) {
+  async register(res: Response, dto: RegisterDto, code: number) {
+    const realCode = await this.cacheManager.get(dto.email)
+    if (!realCode) throw new NotFoundException('Code not found')
+    if (realCode !== code.toString())
+      throw new NotFoundException('Code not found')
+    await this.cacheManager.del(dto.email)
+
     const user: User = await this.userService.register(dto)
 
     const payload: Payload = { id: user.id }
