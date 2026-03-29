@@ -34,6 +34,7 @@ export class AuthService {
   private readonly DISCORD_REDIRECT_URI: string
   private readonly SMTP_HOST: string
   private readonly SMTP_NAME: string
+  private readonly SMTP_EMAIL: string
   private readonly SMTP_USER: string
   private readonly SMTP_PASSWORD: string
   private readonly SMTP_VERIFICATION_TTL: StringValue
@@ -73,8 +74,9 @@ export class AuthService {
       'SMTP_VERIFICATION_RESEND_DELAY'
     )
     this.SMTP_NAME = this.configService.getOrThrow('SMTP_NAME')
-    this.REGISTER_TOKEN_TTL = this.configService.getOrThrow('REGISTER_TOKEN_TTL')
-
+    this.REGISTER_TOKEN_TTL =
+      this.configService.getOrThrow('REGISTER_TOKEN_TTL')
+    this.SMTP_EMAIL = this.configService.getOrThrow('SMTP_EMAIL')
 
     this.transporter = nodemailer.createTransport({
       host: this.SMTP_HOST,
@@ -123,7 +125,7 @@ export class AuthService {
     const mail: MailOptions = {
       from: {
         name: this.SMTP_NAME,
-        address: this.SMTP_USER
+        address: this.SMTP_EMAIL
       },
       to: [email],
       subject: 'Verification code',
@@ -144,7 +146,6 @@ export class AuthService {
     await this.saveCode(email, code)
     await this.sendCode(email, code)
   }
-
 
   async sendVerificationEmail(dto: RegisterDto, res: Response) {
     const token = this.jwtService.sign(dto, {
@@ -209,7 +210,6 @@ export class AuthService {
   logout(res: Response) {
     this.setCookie(res, '', new Date(0))
   }
-
 
   private auth(res: Response, payload: Payload) {
     const { refreshToken, accessToken } = this.signTokens(payload.id)

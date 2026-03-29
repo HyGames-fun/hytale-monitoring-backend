@@ -25,7 +25,7 @@ export class AuthController {
   register(
     @Res({ passthrough: true }) res: Response,
     @Req() req: Request,
-    @Query('code', ParseIntPipe) code: number,
+    @Query('code', ParseIntPipe) code: number
   ) {
     return this.authService.register(res, req, code)
   }
@@ -41,9 +41,7 @@ export class AuthController {
 
   @Public()
   @Post('resend-email')
-  async resendEmail(
-    @Req() req: Request,
-  ) {
+  async resendEmail(@Req() req: Request) {
     await this.authService.resendVerificationEmail(req)
   }
 
