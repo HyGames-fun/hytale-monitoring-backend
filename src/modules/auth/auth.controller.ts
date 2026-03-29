@@ -15,10 +15,16 @@ import type { Response, Request } from 'express'
 import { LoginDto, RegisterDto } from './auth.dto'
 import { UndefinedPipe } from '../../pipes/undefined.pipe'
 import { Public } from '../../decorators/public.decorator'
+import { MailService } from './services/mail.service'
+import { DiscordService } from './services/discord.service'
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly mailService: MailService,
+    private readonly discordService: DiscordService
+  ) {}
 
   @Public()
   @Post('register')
@@ -36,13 +42,13 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() dto: RegisterDto
   ) {
-    await this.authService.sendVerificationEmail(dto, res)
+    await this.mailService.sendVerificationEmail(dto, res)
   }
 
   @Public()
   @Post('resend-email')
   async resendEmail(@Req() req: Request) {
-    await this.authService.resendVerificationEmail(req)
+    await this.mailService.resendVerificationEmail(req)
   }
 
   @Public()
@@ -77,6 +83,6 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Query('code', UndefinedPipe) code: string
   ) {
-    return this.authService.discordCallback(res, code)
+    return this.discordService.discordCallback(res, code)
   }
 }
