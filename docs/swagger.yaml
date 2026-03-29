@@ -367,6 +367,36 @@ paths:
       summary: Cancel registration session
       tags:
       - auth
+  /search:
+    get:
+      description: Full-text search servers by name, description or tags
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Search servers
+      tags:
+      - server
   /server:
     post:
       consumes:

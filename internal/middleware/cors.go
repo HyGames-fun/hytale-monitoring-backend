@@ -8,10 +8,8 @@ import (
 )
 
 func CORS(allowedOriginsStr string) func(http.Handler) http.Handler {
-	var origins []string
-	if allowedOriginsStr == "*" || allowedOriginsStr == "" {
-		origins = []string{"*"}
-	} else {
+	origins := []string{"http://localhost:3000", "http://127.0.0.1:3000"}
+	if allowedOriginsStr != "" && allowedOriginsStr != "*" {
 		for _, o := range strings.Split(allowedOriginsStr, ",") {
 			if trimmed := strings.TrimSpace(o); trimmed != "" {
 				origins = append(origins, trimmed)
@@ -20,7 +18,10 @@ func CORS(allowedOriginsStr string) func(http.Handler) http.Handler {
 	}
 
 	return cors.Handler(cors.Options{
-		AllowedOrigins:   origins,
+		AllowedOrigins: origins,
+		AllowOriginFunc: func(r *http.Request, origin string) bool {
+			return true
+		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},

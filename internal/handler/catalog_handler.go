@@ -29,6 +29,7 @@ func (h *CatalogHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Get("/", h.HealthCheck)
+	r.Get("/search", h.Search)
 	r.Get("/docs", ScalarHandler)
 	r.Get("/reference", ScalarHandler)
 	r.Get("/reference/*", ScalarHandler)
@@ -280,6 +281,7 @@ func (h *CatalogHandler) GetStatuses(w http.ResponseWriter, r *http.Request) {
 // @Success      200 {object} response.SuccessResponse
 // @Failure      400 {object} response.ErrorResponse
 // @Router       /server/search [get]
+// @Router       /search [get]
 func (h *CatalogHandler) Search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("query")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
