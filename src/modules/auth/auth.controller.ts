@@ -47,8 +47,8 @@ export class AuthController {
 
   @Public()
   @Post('resend-email')
-  async resendEmail(@Req() req: Request) {
-    await this.mailService.resendVerificationEmail(req)
+  async resendEmail(@Req() req: Request, @Res() res: Response) {
+    await this.mailService.resendVerificationEmail(req, res)
   }
 
   @Public()

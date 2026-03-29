@@ -38,14 +38,25 @@ export class AuthService {
     this.COOKIE_DOMAIN = this.configService.getOrThrow('COOKIE_DOMAIN')
   }
 
-  async verifyRegisterToken(req: Request): Promise<RegisterDto> {
+  async verifyRegisterToken(req: Request, res: Response): Promise<RegisterDto> {
     const token = req.cookies['registerToken'] as string | undefined
     if (!token) throw new BadRequestException('Register token not found')
 
     try {
       return await this.jwtService.verifyAsync<RegisterDto>(token)
     } catch {
+      this.delRegisterCookie(res)
       throw new UnauthorizedException('Invalid register token')
+    }
+  }
+
+  async verifyCode(code: number, email: string) {
+    const realCode = await this.cacheManager.get<string>(email)
+    if (!realCode) {
+      throw new BadRequestException('Code not found')
+    }
+    if (realCode !== code.toString()) {
+      throw new UnauthorizedException('Invalid code')
     }
   }
 
@@ -64,16 +75,11 @@ export class AuthService {
   }
 
   async register(res: Response, req: Request, code: number) {
-    const dto = await this.verifyRegisterToken(req)
+    const dto = await this.verifyRegisterToken(req, res)
 
-    const realCode = await this.cacheManager.get<string>(dto.email)
-    if (!realCode) {
-      throw new NotFoundException('Code not found')
-    }
-    if (realCode !== code.toString()) {
-      throw new BadRequestException('Invalid code')
-    }
+    await this.verifyCode(code, dto.email)
 
+    this.delRegisterCookie(res)
     await this.cacheManager.del(dto.email)
 
     const user = await this.userService.register(dto)

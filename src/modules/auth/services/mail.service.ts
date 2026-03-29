@@ -38,8 +38,8 @@ export class MailService {
     await this.verificationService.issueVerification(dto.email)
   }
 
-  async resendVerificationEmail(req: Request) {
-    const dto = await this.authService.verifyRegisterToken(req)
+  async resendVerificationEmail(req: Request, res: Response) {
+    const dto = await this.authService.verifyRegisterToken(req, res)
     await this.verificationService.issueVerification(dto.email)
   }
 }
