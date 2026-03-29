@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  HttpStatus,
   Inject,
   Injectable,
   NotFoundException,
@@ -34,10 +33,12 @@ export class AuthService {
   private readonly DISCORD_CLIENT_SECRET: string
   private readonly DISCORD_REDIRECT_URI: string
   private readonly SMTP_HOST: string
+  private readonly SMTP_NAME: string
   private readonly SMTP_USER: string
   private readonly SMTP_PASSWORD: string
   private readonly SMTP_VERIFICATION_TTL: StringValue
   private readonly SMTP_VERIFICATION_RESEND_DELAY: StringValue
+  private readonly REGISTER_TOKEN_TTL: StringValue
 
   private transporter: Transporter
 
@@ -71,6 +72,9 @@ export class AuthService {
     this.SMTP_VERIFICATION_RESEND_DELAY = this.configService.getOrThrow(
       'SMTP_VERIFICATION_RESEND_DELAY'
     )
+    this.SMTP_NAME = this.configService.getOrThrow('SMTP_NAME')
+    this.REGISTER_TOKEN_TTL = this.configService.getOrThrow('REGISTER_TOKEN_TTL')
+
 
     this.transporter = nodemailer.createTransport({
       host: this.SMTP_HOST,
@@ -83,26 +87,45 @@ export class AuthService {
     })
   }
 
-  async sendVerificationEmail(dto: RegisterDto) {
-    const code = randomInt(100000, 1000000).toString()
-    const ttl = await this.cacheManager.ttl(dto.email)
+  private async verifyRegisterToken(req: Request): Promise<RegisterDto> {
+    const token = req.cookies['registerToken'] as string | undefined
+    if (!token) throw new NotFoundException('Register token not found')
 
-    if (ttl) {
-      const ttlMs = ttl - Date.now()
-      const resendAfter =
-        ms(this.SMTP_VERIFICATION_TTL) - ms(this.SMTP_VERIFICATION_RESEND_DELAY)
-
-      if (ttlMs > resendAfter) throw new BadRequestException('Can not resend')
+    try {
+      return await this.jwtService.verifyAsync<RegisterDto>(token)
+    } catch {
+      throw new UnauthorizedException('Invalid register token')
     }
+  }
 
-    await this.cacheManager.set(dto.email, code, ms('5m'))
+  private async checkResendCooldown(email: string) {
+    const ttl = await this.cacheManager.ttl(email)
+    if (!ttl) return
 
+    const ttlMs = ttl - Date.now()
+    const resendAfter =
+      ms(this.SMTP_VERIFICATION_TTL) - ms(this.SMTP_VERIFICATION_RESEND_DELAY)
+
+    if (ttlMs > resendAfter) {
+      throw new BadRequestException('Can not resend')
+    }
+  }
+
+  private generateCode(): string {
+    return randomInt(100000, 1000000).toString()
+  }
+
+  private async saveCode(email: string, code: string) {
+    await this.cacheManager.set(email, code, ms(this.SMTP_VERIFICATION_TTL))
+  }
+
+  private async sendCode(email: string, code: string) {
     const mail: MailOptions = {
       from: {
-        name: 'HyGames.fun',
-        address: 'hygames.dev@gmail.com'
+        name: this.SMTP_NAME,
+        address: this.SMTP_USER
       },
-      to: [dto.email],
+      to: [email],
       subject: 'Verification code',
       html: `<b>${code}</b>`
     }
@@ -114,29 +137,55 @@ export class AuthService {
     }
   }
 
+  private async issueVerification(email: string) {
+    await this.checkResendCooldown(email)
+
+    const code = this.generateCode()
+    await this.saveCode(email, code)
+    await this.sendCode(email, code)
+  }
+
+
+  async sendVerificationEmail(dto: RegisterDto, res: Response) {
+    const token = this.jwtService.sign(dto, {
+      expiresIn: this.REGISTER_TOKEN_TTL
+    })
+
+    this.setRegisterCookie(
+      res,
+      token,
+      new Date(Date.now() + ms(this.REGISTER_TOKEN_TTL))
+    )
+
+    await this.issueVerification(dto.email)
+  }
+
+  async resendVerificationEmail(req: Request) {
+    const dto = await this.verifyRegisterToken(req)
+    await this.issueVerification(dto.email)
+  }
+
+  async register(res: Response, req: Request, code: number) {
+    const dto = await this.verifyRegisterToken(req)
+
+    const realCode = await this.cacheManager.get<string>(dto.email)
+    if (!realCode || realCode !== code.toString()) {
+      throw new NotFoundException('Code not found')
+    }
+
+    await this.cacheManager.del(dto.email)
+
+    const user = await this.userService.register(dto)
+    return this.auth(res, { id: user.id })
+  }
+
   async login(res: Response, dto: LoginDto) {
-    const user: UserDto = await this.userService.findOneForLogin(dto.email)
+    const user = await this.userService.findOneForLogin(dto.email)
 
     const isValidPassword = await password.verify(dto.password, user.password!)
     if (!isValidPassword) throw new NotFoundException('User not found!')
 
-    const payload: Payload = { id: user.id! }
-
-    return this.auth(res, payload)
-  }
-
-  async register(res: Response, dto: RegisterDto, code: number) {
-    const realCode = await this.cacheManager.get(dto.email)
-    if (!realCode) throw new NotFoundException('Code not found')
-    if (realCode !== code.toString())
-      throw new NotFoundException('Code not found')
-    await this.cacheManager.del(dto.email)
-
-    const user: User = await this.userService.register(dto)
-
-    const payload: Payload = { id: user.id }
-
-    return this.auth(res, payload)
+    return this.auth(res, { id: user.id })
   }
 
   async refresh(res: Response, req: Request) {
@@ -148,7 +197,7 @@ export class AuthService {
     let payload: Payload
     try {
       payload = await this.jwtService.verifyAsync<Payload>(refreshToken)
-    } catch (e) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token')
     }
 
@@ -161,6 +210,7 @@ export class AuthService {
     this.setCookie(res, '', new Date(0))
   }
 
+
   private auth(res: Response, payload: Payload) {
     const { refreshToken, accessToken } = this.signTokens(payload.id)
 
@@ -168,6 +218,16 @@ export class AuthService {
     this.setCookie(res, refreshToken, new Date(Date.now() + refreshTokenTTL))
 
     return { accessToken }
+  }
+
+  private setRegisterCookie(res: Response, value: string, expires: Date) {
+    res.cookie('registerToken', value, {
+      httpOnly: true,
+      domain: this.COOKIE_DOMAIN,
+      expires,
+      secure: !isDev(this.configService),
+      sameSite: !isDev(this.configService) ? 'none' : 'lax'
+    })
   }
 
   private setCookie(res: Response, value: string, expires: Date) {

@@ -24,16 +24,27 @@ export class AuthController {
   @Post('register')
   register(
     @Res({ passthrough: true }) res: Response,
+    @Req() req: Request,
     @Query('code', ParseIntPipe) code: number,
-    @Body() dto: RegisterDto
   ) {
-    return this.authService.register(res, dto, code)
+    return this.authService.register(res, req, code)
   }
 
   @Public()
   @Post('init-register')
-  async initRegister(@Body() dto: RegisterDto) {
-    await this.authService.sendVerificationEmail(dto)
+  async initRegister(
+    @Res({ passthrough: true }) res: Response,
+    @Body() dto: RegisterDto
+  ) {
+    await this.authService.sendVerificationEmail(dto, res)
+  }
+
+  @Public()
+  @Post('resend-email')
+  async resendEmail(
+    @Req() req: Request,
+  ) {
+    await this.authService.resendVerificationEmail(req)
   }
 
   @Public()
