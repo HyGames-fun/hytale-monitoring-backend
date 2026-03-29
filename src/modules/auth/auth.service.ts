@@ -51,11 +51,14 @@ export class AuthService {
   }
 
   async verifyCode(code: number, email: string) {
-    const realCode = await this.cacheManager.get<string>(email)
+    const realCode = await this.cacheManager.get<{
+      code: string
+      count: number
+    }>(`email_code:${email}`)
     if (!realCode) {
       throw new BadRequestException('Code not found')
     }
-    if (realCode !== code.toString()) {
+    if (realCode.code !== code.toString()) {
       throw new UnauthorizedException('Invalid code')
     }
   }
@@ -80,7 +83,7 @@ export class AuthService {
     await this.verifyCode(code, dto.email)
 
     this.delRegisterCookie(res)
-    await this.cacheManager.del(dto.email)
+    await this.cacheManager.del(`email_code:${dto.email}`)
 
     const user = await this.userService.register(dto)
     return this.auth(res, { id: user.id })

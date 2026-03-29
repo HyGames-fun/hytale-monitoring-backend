@@ -44,11 +44,11 @@ export class MailService {
       new Date(Date.now() + ms(this.REGISTER_TOKEN_TTL))
     )
 
-    await this.verificationService.issueVerification(dto.email)
+    await this.verificationService.codeVerification(dto.email)
   }
 
   async resendVerificationEmail(req: Request, res: Response) {
     const dto = await this.authService.verifyRegisterToken(req, res)
-    await this.verificationService.issueVerification(dto.email)
+    await this.verificationService.codeVerification(dto.email)
   }
 }

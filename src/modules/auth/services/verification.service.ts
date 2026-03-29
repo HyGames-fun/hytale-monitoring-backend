@@ -47,14 +47,19 @@ export class VerificationService {
   }
 
   private async checkResendCooldown(email: string) {
-    const ttl = await this.cacheManager.ttl(email)
+    const ttl = await this.cacheManager.ttl(`email_code:${email}`)
     if (!ttl) return
+
+    const existCode = await this.cacheManager.get<{
+      code: string
+      count: number
+    }>(`email_code:${email}`)
 
     const ttlMs = ttl - Date.now()
     const resendAfter =
       ms(this.SMTP_VERIFICATION_TTL) - ms(this.SMTP_VERIFICATION_RESEND_DELAY)
 
-    if (ttlMs > resendAfter) {
+    if (existCode!.count > 1 && ttlMs > resendAfter) {
       throw new BadRequestException('Can not resend')
     }
   }
@@ -64,7 +69,19 @@ export class VerificationService {
   }
 
   private async saveCode(email: string, code: string) {
-    await this.cacheManager.set(email, code, ms(this.SMTP_VERIFICATION_TTL))
+    const key = `email_code:${email}`
+
+    const exist = await this.cacheManager.get<{ code: string; count: number }>(
+      key
+    )
+
+    const count = exist ? exist.count + 1 : 0
+
+    await this.cacheManager.set(
+      key,
+      { code, count },
+      ms(this.SMTP_VERIFICATION_TTL)
+    )
   }
 
   private async sendCode(email: string, code: string) {
@@ -85,7 +102,7 @@ export class VerificationService {
     }
   }
 
-  async issueVerification(email: string) {
+  async codeVerification(email: string) {
     await this.checkResendCooldown(email)
 
     const code = this.generateCode()

@@ -1,7 +1,8 @@
 import {
-  BadRequestException, ConflictException,
+  BadRequestException,
+  ConflictException,
   Injectable,
-  NotFoundException,
+  NotFoundException
 } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { DiscordRegisterDto, RegisterDto } from '../auth/auth.dto'
