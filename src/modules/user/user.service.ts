@@ -142,7 +142,7 @@ export class UserService {
 
     return this.prisma.user.create({
       data: {
-        ...dto,
+        ...{ ...dto, iat: undefined, exp: undefined },
         password: await password.hash(dto.password)
       }
     })
