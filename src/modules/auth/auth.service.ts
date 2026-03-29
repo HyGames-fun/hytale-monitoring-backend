@@ -3,7 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
+  UnauthorizedException
 } from '@nestjs/common'
 import { UserService } from '../user/user.service'
 import { JwtService } from '@nestjs/jwt'
@@ -36,15 +36,42 @@ export class AuthService {
       'JWT_REFRESH_TOKEN_TTL'
     )
     this.COOKIE_DOMAIN = this.configService.getOrThrow('COOKIE_DOMAIN')
+  }
 
+  async verifyRegisterToken(req: Request): Promise<RegisterDto> {
+    const token = req.cookies['registerToken'] as string | undefined
+    if (!token) throw new BadRequestException('Register token not found')
+
+    try {
+      return await this.jwtService.verifyAsync<RegisterDto>(token)
+    } catch {
+      throw new UnauthorizedException('Invalid register token')
+    }
+  }
+
+  setRegisterCookie(res: Response, value: string, expires: Date) {
+    res.cookie('registerToken', value, {
+      httpOnly: true,
+      domain: this.COOKIE_DOMAIN,
+      expires,
+      secure: !isDev(this.configService),
+      sameSite: !isDev(this.configService) ? 'none' : 'lax'
+    })
+  }
+
+  delRegisterCookie(res: Response) {
+    this.setRegisterCookie(res, '', new Date(0))
   }
 
   async register(res: Response, req: Request, code: number) {
     const dto = await this.verifyRegisterToken(req)
 
     const realCode = await this.cacheManager.get<string>(dto.email)
-    if (!realCode || realCode !== code.toString()) {
+    if (!realCode) {
       throw new NotFoundException('Code not found')
+    }
+    if (realCode !== code.toString()) {
+      throw new BadRequestException('Invalid code')
     }
 
     await this.cacheManager.del(dto.email)
@@ -82,18 +109,6 @@ export class AuthService {
 
   logout(res: Response) {
     this.setCookie(res, '', new Date(0))
-  }
-
-
-  async verifyRegisterToken(req: Request): Promise<RegisterDto> {
-    const token = req.cookies['registerToken'] as string | undefined
-    if (!token) throw new BadRequestException('Register token not found')
-
-    try {
-      return await this.jwtService.verifyAsync<RegisterDto>(token)
-    } catch {
-      throw new UnauthorizedException('Invalid register token')
-    }
   }
 
   auth(res: Response, payload: Payload) {
@@ -134,5 +149,4 @@ export class AuthService {
 
     return user
   }
-
 }

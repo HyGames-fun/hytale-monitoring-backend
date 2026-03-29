@@ -52,6 +52,12 @@ export class AuthController {
   }
 
   @Public()
+  @Post('stop-register-session')
+  stopRegisterSession(@Res({ passthrough: true }) res: Response) {
+    this.authService.delRegisterCookie(res)
+  }
+
+  @Public()
   @Post('login')
   login(@Res({ passthrough: true }) res: Response, @Body() dto: LoginDto) {
     return this.authService.login(res, dto)

@@ -18,7 +18,7 @@ export class DiscordService {
     private readonly userService: UserService,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
-    private readonly authService: AuthService,
+    private readonly authService: AuthService
   ) {
     this.DISCORD_CLIENT_ID = this.configService.getOrThrow('DISCORD_CLIENT_ID')
     this.DISCORD_CLIENT_SECRET = this.configService.getOrThrow(
@@ -47,7 +47,11 @@ export class DiscordService {
 
     const expiresIn = response.data.expires_in as number
 
-    this.authService.setCookie(res, refreshToken, new Date(Date.now() + expiresIn))
+    this.authService.setCookie(
+      res,
+      refreshToken,
+      new Date(Date.now() + expiresIn)
+    )
 
     if (existingUser) {
       const payload: Payload = { id: existingUser.id! }
