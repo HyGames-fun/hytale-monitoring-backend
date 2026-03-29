@@ -1,9 +1,7 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
-  NotFoundException,
-  PreconditionFailedException
+  NotFoundException
 } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { DiscordRegisterDto, RegisterDto } from '../auth/auth.dto'
@@ -129,17 +127,6 @@ export class UserService {
   }
 
   async register(dto: RegisterDto) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email: dto.email
-      }
-    })
-
-    if (user)
-      throw new ConflictException(
-        `User with email ${dto.email} already exists!`
-      )
-
     return this.prisma.user.create({
       data: {
         ...{ ...dto, iat: undefined, exp: undefined },

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { ConflictException, Injectable } from '@nestjs/common'
 import { RegisterDto } from '../auth.dto'
 import { Request, Response } from 'express'
 import ms, { StringValue } from 'ms'
@@ -6,12 +6,14 @@ import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { VerificationService } from './verification.service'
 import { AuthService } from '../auth.service'
+import { UserService } from '../../user/user.service'
 
 @Injectable()
 export class MailService {
   private readonly REGISTER_TOKEN_TTL: StringValue
 
   constructor(
+    private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly verificationService: VerificationService,
@@ -22,6 +24,13 @@ export class MailService {
   }
 
   async sendVerificationEmail(dto: RegisterDto, res: Response) {
+    const user = await this.userService.findOneOrNull({ email: dto.email })
+
+    if (user)
+      throw new ConflictException(
+        `User with email ${dto.email} already exists!`
+      )
+
     const token = this.jwtService.sign(
       { ...dto },
       {
