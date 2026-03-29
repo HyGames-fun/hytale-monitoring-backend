@@ -1,8 +1,9 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
-  UnauthorizedException
+  UnauthorizedException,
 } from '@nestjs/common'
 import { UserService } from '../user/user.service'
 import { JwtService } from '@nestjs/jwt'
@@ -86,7 +87,7 @@ export class AuthService {
 
   async verifyRegisterToken(req: Request): Promise<RegisterDto> {
     const token = req.cookies['registerToken'] as string | undefined
-    if (!token) throw new NotFoundException('Register token not found')
+    if (!token) throw new BadRequestException('Register token not found')
 
     try {
       return await this.jwtService.verifyAsync<RegisterDto>(token)
